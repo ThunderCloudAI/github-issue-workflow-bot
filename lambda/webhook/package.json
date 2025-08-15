@@ -1,0 +1,12 @@
+{
+  "name": "github-webhook-handler",
+  "version": "1.0.0",
+  "description": "Lambda function to handle GitHub webhook events",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.0"
+  }
+}
