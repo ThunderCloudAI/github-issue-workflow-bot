@@ -9,10 +9,8 @@ cdk.context.json
 
 # TypeScript build output (compiled JS/TS declaration files)
 *.js
+!lambda/webhook/simple-index.js
 *.d.ts
-# But keep Lambda JS files that are source code
-!lambda/**/*.js
-!test-webhook.js
 
 dist/
 build/
