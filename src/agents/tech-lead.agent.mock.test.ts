@@ -86,7 +86,7 @@ describe('TechLeadAgent (Mocked)', () => {
       mockClaudeRunner.setError(claudeError);
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.output).toBe('');
       expect(result.error).toContain('Tech lead analysis failed');
@@ -97,7 +97,7 @@ describe('TechLeadAgent (Mocked)', () => {
       const invalidContext = { ...mockWorkflowContext, title: '' };
 
       const result = await techLeadAgent.execute(invalidContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.output).toBe('');
       expect(result.error).toContain('Invalid workflow context: missing required fields');
@@ -105,7 +105,7 @@ describe('TechLeadAgent (Mocked)', () => {
 
     it('should build correct prompt with all context fields', async () => {
       const mockResponse = 'Mock Claude response';
-      
+
       // Spy on the Claude runner to capture the prompt
       const runPromptSpy = vi.spyOn(mockClaudeRunner, 'runPrompt').mockResolvedValue(mockResponse);
 
@@ -115,7 +115,7 @@ describe('TechLeadAgent (Mocked)', () => {
         body: 'Custom issue description',
         labels: ['bug', 'priority-high'],
         owner: 'custom-owner',
-        repository: 'custom-repo'
+        repository: 'custom-repo',
       };
 
       await techLeadAgent.execute(customContext);
@@ -145,18 +145,20 @@ describe('TechLeadAgent (Mocked)', () => {
       await techLeadAgent.execute(mockWorkflowContext);
 
       const prompt = runPromptSpy.mock.calls[0][0];
-      
+
       // Check prompt structure
       expect(prompt).toContain('You are an expert tech lead reviewing a GitHub issue');
       expect(prompt).toContain('**Issue Details:**');
       expect(prompt).toContain('**Please provide a detailed analysis in the following format:**');
-      
+
       // Check all required sections are included
       expect(prompt).toContain('## Technical Analysis');
       expect(prompt).toContain('### Complexity Assessment');
       expect(prompt).toContain('[Assess if this is Low/Medium/High complexity and explain why]');
       expect(prompt).toContain('### Recommended Technologies');
-      expect(prompt).toContain('[List specific technologies, libraries, or frameworks that should be used]');
+      expect(prompt).toContain(
+        '[List specific technologies, libraries, or frameworks that should be used]'
+      );
       expect(prompt).toContain('### Implementation Approach');
       expect(prompt).toContain('[Provide a step-by-step implementation plan with numbered steps]');
       expect(prompt).toContain('### Testing Strategy');
@@ -167,10 +169,12 @@ describe('TechLeadAgent (Mocked)', () => {
       expect(prompt).toContain('[List any external dependencies or prerequisites]');
       expect(prompt).toContain('### Acceptance Criteria');
       expect(prompt).toContain('[Create a checklist of requirements that must be met]');
-      
+
       // Check guidance text
       expect(prompt).toContain('Please be specific and actionable in your recommendations');
-      expect(prompt).toContain('Focus on practical implementation details that a developer can follow');
+      expect(prompt).toContain(
+        'Focus on practical implementation details that a developer can follow'
+      );
     });
 
     it('should handle empty labels array', async () => {
@@ -179,7 +183,7 @@ describe('TechLeadAgent (Mocked)', () => {
 
       const contextWithNoLabels = {
         ...mockWorkflowContext,
-        labels: []
+        labels: [],
       };
 
       await techLeadAgent.execute(contextWithNoLabels);
@@ -194,7 +198,7 @@ describe('TechLeadAgent (Mocked)', () => {
 
       const contextWithEmptyBody = {
         ...mockWorkflowContext,
-        body: ''
+        body: '',
       };
 
       await techLeadAgent.execute(contextWithEmptyBody);
@@ -211,7 +215,7 @@ describe('TechLeadAgent (Mocked)', () => {
       mockClaudeRunner.setError(timeoutError);
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.output).toBe('');
       expect(result.error).toContain('Tech lead analysis failed');
@@ -223,7 +227,7 @@ describe('TechLeadAgent (Mocked)', () => {
       mockClaudeRunner.setError(processError);
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.output).toBe('');
       expect(result.error).toContain('Tech lead analysis failed');
@@ -234,7 +238,7 @@ describe('TechLeadAgent (Mocked)', () => {
       mockClaudeRunner.setResponse('');
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(true);
       expect(result.output).toBe('');
     });
@@ -243,7 +247,7 @@ describe('TechLeadAgent (Mocked)', () => {
       mockClaudeRunner.setResponse('   \n\t   ');
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(true);
       expect(result.output).toBe('   \n\t   '); // Should preserve the original response
     });
@@ -254,7 +258,7 @@ describe('TechLeadAgent (Mocked)', () => {
       const invalidContext = { ...mockWorkflowContext, title: '' };
 
       const result = await techLeadAgent.execute(invalidContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.output).toBe('');
       expect(result.error).toContain('Invalid workflow context: missing required fields');
@@ -264,7 +268,7 @@ describe('TechLeadAgent (Mocked)', () => {
       const invalidContext = { ...mockWorkflowContext, repository: '' };
 
       const result = await techLeadAgent.execute(invalidContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.output).toBe('');
       expect(result.error).toContain('Invalid workflow context: missing required fields');
@@ -274,7 +278,7 @@ describe('TechLeadAgent (Mocked)', () => {
       const invalidContext = { ...mockWorkflowContext, owner: '' };
 
       const result = await techLeadAgent.execute(invalidContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.output).toBe('');
       expect(result.error).toContain('Invalid workflow context: missing required fields');
@@ -288,11 +292,11 @@ describe('TechLeadAgent (Mocked)', () => {
         ...mockWorkflowContext,
         title: 'Valid Title',
         repository: 'valid-repo',
-        owner: 'valid-owner'
+        owner: 'valid-owner',
       };
 
       const result = await techLeadAgent.execute(validContext);
-      
+
       expect(result.success).toBe(true);
       expect(result.output).toBe(mockResponse);
     });

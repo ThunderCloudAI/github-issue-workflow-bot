@@ -10,7 +10,7 @@ describe('TechLeadAgent', () => {
 
   beforeEach(() => {
     mockClaudeRunner = new MockClaudeRunner();
-    
+
     // Set up a spy to return different responses based on the prompt content
     const originalRunPrompt = mockClaudeRunner.runPrompt.bind(mockClaudeRunner);
     vi.spyOn(mockClaudeRunner, 'runPrompt').mockImplementation(async (prompt: string) => {
@@ -61,8 +61,13 @@ describe('TechLeadAgent', () => {
 - [ ] All tests pass consistently
 - [ ] Testing is automated`;
       }
-      
-      if (prompt.includes('REST API endpoints') || (prompt.includes('API') && !prompt.includes('General improvement') && !prompt.includes('Some improvement'))) {
+
+      if (
+        prompt.includes('REST API endpoints') ||
+        (prompt.includes('API') &&
+          !prompt.includes('General improvement') &&
+          !prompt.includes('Some improvement'))
+      ) {
         return `## Technical Analysis
 
 ### Complexity Assessment
@@ -107,7 +112,7 @@ describe('TechLeadAgent', () => {
 - [ ] Request validation works properly
 - [ ] Documentation is complete`;
       }
-      
+
       if (prompt.includes('database') || prompt.includes('Database')) {
         return `## Technical Analysis
 
@@ -145,7 +150,7 @@ describe('TechLeadAgent', () => {
 - [ ] ORM integration works correctly
 - [ ] Data integrity is maintained`;
       }
-      
+
       if (prompt.includes('refactor') || prompt.includes('breaking')) {
         return `## Technical Analysis
 
@@ -190,7 +195,7 @@ describe('TechLeadAgent', () => {
 - [ ] Migration path is clear
 - [ ] All tests pass after refactor`;
       }
-      
+
       if (prompt.includes('typo') || prompt.includes('minor') || prompt.includes('Simple')) {
         return `## Technical Analysis
 
@@ -233,8 +238,14 @@ describe('TechLeadAgent', () => {
 - [ ] No regressions introduced
 - [ ] Documentation updated if needed`;
       }
-      
-      if ((prompt.includes('authentication') || prompt.includes('login') || prompt.includes('auth')) && !prompt.includes('General improvement') && !prompt.includes('Some improvement')) {
+
+      if (
+        (prompt.includes('authentication') ||
+          prompt.includes('login') ||
+          prompt.includes('auth')) &&
+        !prompt.includes('General improvement') &&
+        !prompt.includes('Some improvement')
+      ) {
         return `## Technical Analysis
 
 ### Complexity Assessment
@@ -281,8 +292,13 @@ describe('TechLeadAgent', () => {
 - [ ] JWT tokens are generated and validated
 - [ ] Protected endpoints require authentication`;
       }
-      
-      if ((prompt.includes('testing') || prompt.includes('test')) && !prompt.includes('General improvement') && !prompt.includes('Some improvement') && !prompt.includes('random improvement')) {
+
+      if (
+        (prompt.includes('testing') || prompt.includes('test')) &&
+        !prompt.includes('General improvement') &&
+        !prompt.includes('Some improvement') &&
+        !prompt.includes('random improvement')
+      ) {
         return `## Technical Analysis
 
 ### Complexity Assessment
@@ -328,7 +344,7 @@ describe('TechLeadAgent', () => {
 - [ ] All tests pass consistently
 - [ ] Testing is automated`;
       }
-      
+
       // Default response for other cases
       return `## Technical Analysis
 
@@ -373,7 +389,7 @@ describe('TechLeadAgent', () => {
 - [ ] Error messages are clear and helpful
 - [ ] Performance meets acceptable standards`;
     });
-    
+
     techLeadAgent = new TechLeadAgent(mockClaudeRunner);
   });
 

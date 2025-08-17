@@ -13,9 +13,9 @@ import { MockSQSClient } from '../aws/sqs-client.mock';
 // Mock AWS SDK and Octokit
 vi.mock('@aws-sdk/client-sqs', () => ({
   SQSClient: vi.fn(),
-  SendMessageCommand: vi.fn((input) => ({ input })),
-  ReceiveMessageCommand: vi.fn((input) => ({ input })),
-  DeleteMessageCommand: vi.fn((input) => ({ input })),
+  SendMessageCommand: vi.fn(input => ({ input })),
+  ReceiveMessageCommand: vi.fn(input => ({ input })),
+  DeleteMessageCommand: vi.fn(input => ({ input })),
 }));
 
 const mockOctokit = {
@@ -131,18 +131,22 @@ describe('Integration Tests', () => {
       // Configure mock SQS responses
       mockSQSClient.setResponse('SendMessageCommand', {});
       mockSQSClient.setResponse('ReceiveMessageCommand', {
-        Messages: [{
-          MessageId: 'test-message-id',
-          ReceiptHandle: 'test-receipt-handle',
-          Body: JSON.stringify(mockGitHubWebhook),
-        }],
+        Messages: [
+          {
+            MessageId: 'test-message-id',
+            ReceiptHandle: 'test-receipt-handle',
+            Body: JSON.stringify(mockGitHubWebhook),
+          },
+        ],
       });
       mockSQSClient.setResponse('DeleteMessageCommand', {});
 
       // 1. Simulate webhook receipt
       const payload = JSON.stringify(mockGitHubWebhook);
-      const signature = `sha256=${crypto.createHmac('sha256', testConfig.github.webhookSecret)
-        .update(payload).digest('hex')}`;
+      const signature = `sha256=${crypto
+        .createHmac('sha256', testConfig.github.webhookSecret)
+        .update(payload)
+        .digest('hex')}`;
 
       const app = (webhookHandler as any).app;
       const webhookResponse = await request(app)
@@ -159,11 +163,11 @@ describe('Integration Tests', () => {
 
       // Verify message was sent to SQS
       expect(mockSQSClient.getCallCount()).toBe(1);
-      
+
       // Debug: Check what was actually called
       const calls = mockSQSClient.getCalls();
       console.log('SQS Calls:', JSON.stringify(calls, null, 2));
-      
+
       // More lenient check for now
       expect(mockSQSClient.getCallCountForCommand('SendMessageCommand')).toBe(1);
 
@@ -209,7 +213,7 @@ describe('Integration Tests', () => {
           owner: 'testuser',
           repo: 'test-repo',
           issue_number: 123,
-          labels: expect.arrayContaining([expect.stringMatching(/^workflow:/)])
+          labels: expect.arrayContaining([expect.stringMatching(/^workflow:/)]),
         })
       );
 
@@ -229,7 +233,7 @@ describe('Integration Tests', () => {
       mockOctokit.repos.get.mockRejectedValue(new Error('Repository not found'));
 
       const payload = JSON.stringify(mockGitHubWebhook);
-      
+
       // Simulate message processing with failure
       const consoleSpy = vi.spyOn(console, 'error');
 
@@ -330,7 +334,7 @@ describe('Integration Tests', () => {
 
       // Verify branch creation was retried
       expect(mockOctokit.git.createRef).toHaveBeenCalledTimes(3);
-      
+
       // Verify workflow completed successfully
       expect(mockOctokit.issues.createComment).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -347,12 +351,11 @@ describe('Integration Tests', () => {
       mockOctokit.issues.createComment.mockResolvedValue(mockOctokitResponse.issues.createComment);
       mockOctokit.issues.addLabels.mockResolvedValue(mockOctokitResponse.issues.addLabels);
 
-      await expect(processor.processIssue(mockGitHubWebhook))
-        .rejects.toThrow();
+      await expect(processor.processIssue(mockGitHubWebhook)).rejects.toThrow();
 
       // Verify all retries were attempted (initial + 2 retries = 3 total)
       expect(mockOctokit.git.createRef).toHaveBeenCalledTimes(3);
-      
+
       // Verify failure status was reported
       expect(mockOctokit.issues.createComment).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -366,7 +369,7 @@ describe('Integration Tests', () => {
     it('should perform health checks across all components', async () => {
       // Setup successful GitHub API response for health check
       mockOctokit.repos.get.mockResolvedValue(mockOctokitResponse.repos.get);
-      
+
       // Setup successful SQS response for health check
       mockSQSClient.setResponse('ReceiveMessageCommand', {});
 
@@ -375,7 +378,7 @@ describe('Integration Tests', () => {
 
       expect(processorHealth.status).toBe('healthy');
       expect(consumerHealth.status).toBe('healthy');
-      
+
       expect(mockOctokit.repos.get).toHaveBeenCalledWith({
         owner: 'octocat',
         repo: 'Hello-World',
@@ -385,7 +388,7 @@ describe('Integration Tests', () => {
     it('should detect unhealthy components', async () => {
       // Setup GitHub API to fail
       mockOctokit.repos.get.mockRejectedValue(new Error('GitHub API down'));
-      
+
       // Setup SQS to fail
       mockSQSClient.setError('ReceiveMessageCommand', new Error('SQS unavailable'));
 
@@ -413,17 +416,18 @@ describe('Integration Tests', () => {
           tech_lead: { enabled: false, timeout: 10000 },
         },
       };
-      
+
       const disabledProcessor = new WorkflowProcessor(disabledConfig);
-      
+
       mockOctokit.repos.get.mockResolvedValue(mockOctokitResponse.repos.get);
       mockOctokit.repos.getBranch.mockResolvedValue(mockOctokitResponse.repos.getBranch);
       mockOctokit.git.createRef.mockResolvedValue(mockOctokitResponse.git.createRef);
       mockOctokit.issues.createComment.mockResolvedValue(mockOctokitResponse.issues.createComment);
       mockOctokit.issues.addLabels.mockResolvedValue(mockOctokitResponse.issues.addLabels);
 
-      await expect(disabledProcessor.processIssue(mockGitHubWebhook))
-        .rejects.toThrow('Tech lead agent is disabled');
+      await expect(disabledProcessor.processIssue(mockGitHubWebhook)).rejects.toThrow(
+        'Tech lead agent is disabled'
+      );
     });
   });
 });

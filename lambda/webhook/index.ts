@@ -35,15 +35,15 @@ function validateSignature(payload: string, signature: string, secret: string): 
   const hmac = crypto.createHmac('sha256', secret);
   hmac.update(payload, 'utf8');
   const expectedSignature = `sha256=${hmac.digest('hex')}`;
-  
+
   // Use crypto.timingSafeEqual to prevent timing attacks
   const sigBuffer = Buffer.from(signature, 'utf8');
   const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
-  
+
   if (sigBuffer.length !== expectedBuffer.length) {
     return false;
   }
-  
+
   return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
 }
 
@@ -109,13 +109,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     // Extract headers (case-insensitive)
-    const headers = Object.keys(event.headers || {}).reduce((acc, key) => {
-      const value = event.headers[key];
-      if (value) {
-        acc[key.toLowerCase()] = value;
-      }
-      return acc;
-    }, {} as Record<string, string>);
+    const headers = Object.keys(event.headers || {}).reduce(
+      (acc, key) => {
+        const value = event.headers[key];
+        if (value) {
+          acc[key.toLowerCase()] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, string>
+    );
 
     const signature = headers['x-hub-signature-256'];
     const eventType = headers['x-github-event'];
@@ -222,10 +225,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       messageId: result.MessageId,
       repository: webhookEvent.repository?.fullName,
     });
-
   } catch (error) {
     console.error('Error processing webhook:', error);
-    
+
     // Don't expose internal errors to GitHub
     return createResponse(500, 'Internal server error');
   }

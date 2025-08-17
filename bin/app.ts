@@ -24,6 +24,6 @@ new WebhookStack(app, 'GitHubWebhookStack', {
     Team: 'Platform',
     DataClassification: 'Internal',
     Backup: 'NotRequired',
-    Compliance: 'None'
-  }
+    Compliance: 'None',
+  },
 });

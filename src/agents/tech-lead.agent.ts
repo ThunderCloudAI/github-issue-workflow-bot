@@ -13,10 +13,10 @@ export class TechLeadAgent extends BaseAgent {
     try {
       // Generate prompt for Claude analysis
       const prompt = this.buildAnalysisPrompt(context);
-      
+
       // Use Claude to analyze the issue
       const analysis = await this.runClaude(prompt);
-      
+
       return {
         success: true,
         output: analysis,
@@ -67,5 +67,4 @@ export class TechLeadAgent extends BaseAgent {
 
 Please be specific and actionable in your recommendations. Focus on practical implementation details that a developer can follow.`;
   }
-
 }

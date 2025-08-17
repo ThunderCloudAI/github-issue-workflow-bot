@@ -29,19 +29,18 @@ class WorkflowProcessor {
     try {
       // Step 1: Parse event
       const issueData = this.parseIssueEvent(webhookPayload);
-      
+
       // Step 2: Create branch
       const branch = await this.createBranch(issueData);
-      
+
       // Step 3: Assign agent
       const agent = await this.assignAgent(issueData);
-      
+
       // Step 4: Execute work
       const result = await agent.execute(issueData, branch);
-      
+
       // Step 5: Update status
       await this.updateIssueStatus(issueData, result);
-      
     } catch (error) {
       await this.handleError(error, webhookPayload);
     }
@@ -86,7 +85,7 @@ class ParseConsumer {
       issueId: issueData.id,
       repository: issueData.repository,
       title: issueData.title,
-      body: issueData.body
+      body: issueData.body,
     });
   }
 }
@@ -97,7 +96,7 @@ class BranchConsumer {
     const branch = await this.createBranch(issueData);
     await this.publishToQueue('agent-assignment', {
       ...issueData,
-      branchName: branch.name
+      branchName: branch.name,
     });
   }
 }
@@ -109,7 +108,7 @@ class AgentConsumer {
     const result = await agent.execute(data);
     await this.publishToQueue('status-update', {
       ...data,
-      result: result
+      result: result,
     });
   }
 }
@@ -132,24 +131,28 @@ class StatusConsumer {
 ## Comparison
 
 ### Single Consumer Pros
+
 - **Simplicity**: Easier to understand and debug
 - **Atomicity**: All-or-nothing processing
 - **Lower Infrastructure**: Fewer moving parts
 - **Consistent State**: Single point of state management
 
 ### Single Consumer Cons
+
 - **Scalability**: Bottleneck at single consumer
 - **Resource Usage**: Must handle all processing types
 - **Recovery Complexity**: Must track partial completion
 - **Blast Radius**: Single failure affects entire workflow
 
 ### Multi-Consumer Pros
+
 - **Scalability**: Independent scaling per step
 - **Specialization**: Optimized consumers per task type
 - **Fault Isolation**: Failures contained to specific steps
 - **Parallel Processing**: Multiple workflows can be at different stages
 
 ### Multi-Consumer Cons
+
 - **Complexity**: More components to manage
 - **Infrastructure Overhead**: Multiple queues and consumers
 - **Eventual Consistency**: Harder to track overall state
@@ -163,34 +166,34 @@ class StatusConsumer {
 graph TD
     A[GitHub Issue Created] --> B[Webhook Queue]
     B --> C[Single Consumer]
-    
+
     C --> D{Parse Issue}
     D -->|Success| E[Tech Lead Agent]
     D -->|Retry 1-3| D
     D -->|Max Retries| Z1[Dead Letter Queue]
-    
+
     E -->|Success| F[Worker Agent]
     E -->|Retry 1-3| E
     E -->|Max Retries| Z2[Rollback & DLQ]
-    
+
     F -->|Success| G[QA Agent]
     F -->|Retry 1-3| F
     F -->|Max Retries| Z3[Rollback & DLQ]
-    
+
     G -->|Approved| H[Create Pull Request]
     G -->|Rejected| I[Add Feedback Comment]
     G -->|Retry 1-3| G
     G -->|Max Retries| Z4[Manual Review Required]
-    
+
     H --> J[Workflow Complete]
     I --> K[Wait for Developer Fix]
     K --> F
-    
+
     Z1 --> L[Manual Investigation]
     Z2 --> L
     Z3 --> L
     Z4 --> L
-    
+
     style C fill:#e1f5fe
     style L fill:#ffebee
     style J fill:#e8f5e8
@@ -201,47 +204,47 @@ graph TD
 ```mermaid
 graph TD
     A[GitHub Issue Created] --> B[Parse Queue]
-    
+
     B --> C[Parse Consumer]
     C -->|Success| D[Tech Lead Queue]
     C -->|Retry 1-3| C
     C -->|Max Retries| Z1[Parse DLQ]
-    
+
     D --> E[Tech Lead Consumer]
     E -->|Success| F[Worker Queue]
     E -->|Retry 1-3| E
     E -->|Max Retries| Z2[Tech Lead DLQ]
-    
+
     F --> G[Worker Consumer]
     G -->|Success| H[QA Queue]
     G -->|Retry 1-3| G
     G -->|Max Retries| Z3[Worker DLQ]
-    
+
     H --> I[QA Consumer]
     I -->|Approved| J[Create Pull Request]
     I -->|Rejected| K[Feedback Queue]
     I -->|Retry 1-3| I
     I -->|Max Retries| Z4[QA DLQ]
-    
+
     K --> L[Feedback Consumer]
     L --> M[Add GitHub Comment]
     M --> N[Wait for Fix]
     N --> F
-    
+
     J --> O[Workflow Complete]
-    
+
     Z1 --> P[Manual Investigation]
     Z2 --> P
     Z3 --> P
     Z4 --> P
-    
+
     subgraph "Error Recovery"
         P --> Q{Error Type}
         Q -->|Transient| R[Requeue Message]
         Q -->|Permanent| S[Manual Fix Required]
         R --> B
     end
-    
+
     style C fill:#e3f2fd
     style E fill:#e8f5e8
     style G fill:#fff3e0
@@ -261,25 +264,25 @@ sequenceDiagram
     participant WA as Worker Agent
     participant QA as QA Agent
     participant Git as Git Repository
-    
+
     GH->>WH: Issue Created Event
     WH->>TL: Process Issue
-    
+
     TL->>TL: Analyze Requirements
     TL->>GH: Add Technical Details
     TL->>WA: Trigger Implementation
-    
+
     WA->>Git: Create Feature Branch
     WA->>WA: Generate Code
     WA->>WA: Write Tests
     WA->>Git: Commit Changes
     WA->>QA: Trigger Review
-    
+
     QA->>Git: Analyze Code Quality
     QA->>QA: Run Security Scan
     QA->>QA: Check Test Coverage
     QA->>QA: Validate Acceptance Criteria
-    
+
     alt Quality Approved
         QA->>GH: Create Pull Request
         QA->>GH: Update Issue Status
@@ -302,6 +305,7 @@ Consider implementing the single consumer first, then evolving to multi-consumer
 ## Error Handling Best Practices
 
 ### Both Approaches
+
 - Implement comprehensive logging and monitoring
 - Use structured error codes for different failure types
 - Maintain audit trail of all workflow steps
@@ -309,6 +313,7 @@ Consider implementing the single consumer first, then evolving to multi-consumer
 - Use idempotent operations where possible
 
 ### Retry Strategies
+
 - **Transient Errors**: Immediate retry with exponential backoff
 - **Rate Limiting**: Respect GitHub API limits with proper delays
 - **Permanent Errors**: Move to dead letter queue immediately

@@ -59,13 +59,13 @@ export class SQSConsumer {
       });
 
       const response = await this.sqsClient.send(command);
-      
+
       if (!response.Messages || response.Messages.length === 0) {
         return; // No messages to process
       }
 
       // Process messages in parallel
-      const processingPromises = response.Messages.map((message: Message) => 
+      const processingPromises = response.Messages.map((message: Message) =>
         this.processMessage(message)
       );
 
@@ -84,21 +84,20 @@ export class SQSConsumer {
 
     try {
       console.log(`Processing message: ${message.MessageId}`);
-      
+
       // Parse the webhook payload
       const webhookPayload = this.parseWebhookPayload(message.Body);
-      
+
       // Process the issue workflow
       await this.processor.processIssue(webhookPayload);
-      
+
       // Delete the message from the queue after successful processing
       await this.deleteMessage(message.ReceiptHandle);
-      
+
       console.log(`Successfully processed message: ${message.MessageId}`);
-      
     } catch (error) {
       console.error(`Failed to process message ${message.MessageId}:`, error);
-      
+
       // For non-retryable errors, we might want to move to DLQ
       // For now, we'll let SQS handle retries via message visibility timeout
       if (error instanceof WorkflowError && !error.retryable) {
@@ -113,7 +112,7 @@ export class SQSConsumer {
     try {
       // Handle different message formats (direct webhook vs SQS wrapped)
       let payload = JSON.parse(messageBody);
-      
+
       // If the message is wrapped in SQS format, extract the actual payload
       if (payload.Records && Array.isArray(payload.Records)) {
         // SNS -> SQS format
@@ -125,7 +124,7 @@ export class SQSConsumer {
           payload = JSON.parse(payload.Records[0].body);
         }
       }
-      
+
       // Validate required webhook fields
       if (!payload.action || !payload.issue || !payload.repository) {
         throw new WorkflowError(
@@ -134,7 +133,7 @@ export class SQSConsumer {
           false
         );
       }
-      
+
       return payload as GitHubWebhook;
     } catch (error) {
       if (error instanceof WorkflowError) {
@@ -155,7 +154,7 @@ export class SQSConsumer {
         QueueUrl: this.config.queueUrl,
         ReceiptHandle: receiptHandle,
       });
-      
+
       await this.sqsClient.send(command);
     } catch (error) {
       console.error('Failed to delete message from SQS:', error);
@@ -176,19 +175,19 @@ export class SQSConsumer {
         MaxNumberOfMessages: 1,
         WaitTimeSeconds: 1,
       });
-      
+
       await this.sqsClient.send(command);
-      
+
       return {
         status: 'healthy',
         queueUrl: this.config.queueUrl,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         queueUrl: this.config.queueUrl,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

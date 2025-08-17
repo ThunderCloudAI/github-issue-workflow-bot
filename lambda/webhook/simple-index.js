@@ -11,24 +11,18 @@ function validateGitHubSignature(body, signature, secret) {
     return false;
   }
 
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(body, 'utf8')
-    .digest('hex');
+  const expectedSignature = crypto.createHmac('sha256', secret).update(body, 'utf8').digest('hex');
 
   const expectedSignatureFormatted = `sha256=${expectedSignature}`;
 
   // Use timing-safe comparison to prevent timing attacks
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignatureFormatted)
-  );
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignatureFormatted));
 }
 
 /**
  * Main Lambda handler for GitHub webhooks
  */
-exports.handler = async (event) => {
+exports.handler = async event => {
   console.log('Received webhook event:', JSON.stringify(event, null, 2));
 
   try {
@@ -140,7 +134,6 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
       },
     };
-
   } catch (error) {
     console.error('Error processing webhook:', error);
     return {

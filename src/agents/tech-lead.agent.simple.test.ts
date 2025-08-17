@@ -69,7 +69,7 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       mockClaudeRunner.setResponse(mockAnalysis);
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(true);
       expect(result.output).toBe(mockAnalysis);
       expect(result.error).toBeUndefined();
@@ -80,17 +80,17 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       mockClaudeRunner.setResponse('Analysis result');
 
       await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(runPromptSpy).toHaveBeenCalledOnce();
       const prompt = runPromptSpy.mock.calls[0][0];
-      
+
       // Check that prompt includes all required elements
       expect(prompt).toContain('expert tech lead');
       expect(prompt).toContain('Title: Add user authentication');
       expect(prompt).toContain('Description: We need to add login functionality');
       expect(prompt).toContain('Labels: enhancement, backend');
       expect(prompt).toContain('Repository: testuser/test-repo');
-      
+
       // Check that prompt asks for all required sections
       expect(prompt).toContain('Complexity Assessment');
       expect(prompt).toContain('Recommended Technologies');
@@ -105,7 +105,7 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       const invalidContext = { ...mockWorkflowContext, title: '' };
 
       const result = await techLeadAgent.execute(invalidContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Invalid workflow context');
     });
@@ -114,20 +114,20 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       mockClaudeRunner.setError(new Error('Claude not available'));
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Claude not available');
     });
 
     it('should handle Claude timeout', async () => {
       const shortTimeoutAgent = new TechLeadAgent(mockClaudeRunner, 100); // 100ms timeout
-      
+
       // Mock a slow response that exceeds timeout
       mockClaudeRunner.setDelay(200);
       mockClaudeRunner.setResponse('Slow response');
 
       const result = await shortTimeoutAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('timed out');
     });
@@ -136,7 +136,7 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       mockClaudeRunner.setResponse('');
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(true);
       expect(result.output).toBe('');
     });
@@ -148,7 +148,7 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       const results = await Promise.all([
         techLeadAgent.execute(mockWorkflowContext),
         techLeadAgent.execute(mockWorkflowContext),
-        techLeadAgent.execute(mockWorkflowContext)
+        techLeadAgent.execute(mockWorkflowContext),
       ]);
 
       expect(results[0].output).toBe('First analysis');
@@ -163,7 +163,7 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       mockClaudeRunner.setError(originalError);
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Specific Claude error');
     });
@@ -173,7 +173,7 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       mockClaudeRunner.setError(originalError);
 
       const result = await techLeadAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Original Claude error');
       expect(result.output).toBe('');
@@ -184,7 +184,7 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       mockClaudeRunner.setDelay(100); // Longer than timeout
 
       const result = await timeoutAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('timed out');
     });
@@ -201,11 +201,11 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
         body: 'Custom description with details',
         labels: ['custom', 'test', 'labels'],
         owner: 'customowner',
-        repository: 'customrepo'
+        repository: 'customrepo',
       };
 
       await techLeadAgent.execute(contextWithAllFields);
-      
+
       const prompt = runPromptSpy.mock.calls[0][0];
       expect(prompt).toContain('Custom Title');
       expect(prompt).toContain('Custom description with details');
@@ -219,11 +219,11 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
 
       const contextWithEmptyLabels = {
         ...mockWorkflowContext,
-        labels: []
+        labels: [],
       };
 
       await techLeadAgent.execute(contextWithEmptyLabels);
-      
+
       const prompt = runPromptSpy.mock.calls[0][0];
       expect(prompt).toContain('Labels: '); // Should still include the labels section
     });
@@ -233,9 +233,9 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
       mockClaudeRunner.setResponse('Test response');
 
       await techLeadAgent.execute(mockWorkflowContext);
-      
+
       const prompt = runPromptSpy.mock.calls[0][0];
-      
+
       // Check that all required sections are present and formatted
       expect(prompt).toMatch(/## Technical Analysis/);
       expect(prompt).toMatch(/### Complexity Assessment/);
@@ -255,17 +255,14 @@ describe('TechLeadAgent (Simplified Architecture)', () => {
 
       const customTimeoutAgent = new TechLeadAgent(mockClaudeRunner, 15000);
       await customTimeoutAgent.execute(mockWorkflowContext);
-      
-      expect(runPromptSpy).toHaveBeenCalledWith(
-        expect.any(String),
-        15000
-      );
+
+      expect(runPromptSpy).toHaveBeenCalledWith(expect.any(String), 15000);
     });
 
     it('should work with different Claude runner implementations', async () => {
       // Test that the agent works with any IClaudeRunner implementation
       const customRunner = {
-        runPrompt: vi.fn().mockResolvedValue('Custom runner response')
+        runPrompt: vi.fn().mockResolvedValue('Custom runner response'),
       };
 
       const agentWithCustomRunner = new TechLeadAgent(customRunner as any);

@@ -12,10 +12,10 @@ class TestAgent extends BaseAgent {
 
   protected async processIssue(context: WorkflowContext): Promise<AgentResult> {
     this.validateContext(context);
-    
+
     // Simulate some processing
     await this.delay(100);
-    
+
     return {
       success: true,
       output: 'Test agent output',
@@ -31,7 +31,7 @@ class TimeoutTestAgent extends BaseAgent {
   protected async processIssue(context: WorkflowContext): Promise<AgentResult> {
     // Simulate long-running process
     await this.delay(50000);
-    
+
     return {
       success: true,
       output: 'Should not reach here',
@@ -219,7 +219,7 @@ describe('BaseAgent', () => {
     it('should resolve after delay', async () => {
       const promise = (testAgent as any).delay(50);
       expect(promise).toBeInstanceOf(Promise);
-      
+
       const result = await promise;
       expect(result).toBeUndefined();
     });

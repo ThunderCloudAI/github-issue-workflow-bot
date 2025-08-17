@@ -11,23 +11,23 @@ graph TD
     A[GitHub Issue Created] --> B[Webhook Received]
     B --> C[Parse Issue Event]
     C --> D{Valid Issue?}
-    
+
     D -->|Yes| E[Tech Lead Agent]
     D -->|No| F[Skip Processing]
-    
+
     E --> G[Analyze Issue Requirements]
     G --> H[Add Technical Details]
     H --> I[Update GitHub Issue]
     I --> J[Workflow Complete]
-    
+
     E -->|Agent Error| K[Retry Tech Lead Analysis]
     K -->|Success| G
     K -->|Max Retries| L[Manual Review Required]
-    
+
     F --> M[End]
     J --> M
     L --> M
-    
+
     style A fill:#e8f5e8
     style E fill:#fff3e0
     style J fill:#e3f2fd
@@ -48,12 +48,14 @@ graph TD
 ## Example Tech Lead Enhancement
 
 **Original Issue:**
+
 ```
 Title: Add user authentication
 Body: We need to add login functionality to the app
 ```
 
 **After Tech Lead Enhancement:**
+
 ```
 Title: Add user authentication
 Body: We need to add login functionality to the app

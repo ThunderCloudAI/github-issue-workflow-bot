@@ -4,7 +4,7 @@ import { vi } from 'vitest';
 beforeEach(() => {
   // Clear all mocks before each test
   vi.clearAllMocks();
-  
+
   // Reset environment variables
   process.env.NODE_ENV = 'test';
   process.env.GITHUB_TOKEN = 'test-token';

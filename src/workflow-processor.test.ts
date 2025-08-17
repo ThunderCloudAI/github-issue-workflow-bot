@@ -43,7 +43,7 @@ describe('WorkflowProcessor', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Setup mocks
     mockGitHubService = {
       validateRepository: vi.fn(),
@@ -51,7 +51,7 @@ describe('WorkflowProcessor', () => {
       updateIssueStatus: vi.fn(),
       addTechLeadAnalysis: vi.fn(),
     };
-    
+
     mockTechLeadAgent = {
       execute: vi.fn(),
     };
@@ -99,16 +99,14 @@ describe('WorkflowProcessor', () => {
     it('should handle invalid webhook payload', async () => {
       const invalidWebhook = { ...mockGitHubWebhook, action: 'closed' };
 
-      await expect(processor.processIssue(invalidWebhook))
-        .rejects.toThrow(WorkflowError);
+      await expect(processor.processIssue(invalidWebhook)).rejects.toThrow(WorkflowError);
     });
 
     it('should handle repository access denied', async () => {
       mockGitHubService.validateRepository.mockResolvedValue(false);
 
-      await expect(processor.processIssue(mockGitHubWebhook))
-        .rejects.toThrow(WorkflowError);
-      
+      await expect(processor.processIssue(mockGitHubWebhook)).rejects.toThrow(WorkflowError);
+
       try {
         await processor.processIssue(mockGitHubWebhook);
       } catch (error) {
@@ -122,8 +120,7 @@ describe('WorkflowProcessor', () => {
         new WorkflowError('Branch creation failed', 'BRANCH_CREATION_FAILED')
       );
 
-      await expect(processor.processIssue(mockGitHubWebhook))
-        .rejects.toThrow(WorkflowError);
+      await expect(processor.processIssue(mockGitHubWebhook)).rejects.toThrow(WorkflowError);
     });
 
     it('should handle disabled tech lead agent', async () => {
@@ -134,11 +131,12 @@ describe('WorkflowProcessor', () => {
           tech_lead: { enabled: false, timeout: 30000 },
         },
       };
-      
+
       const disabledProcessor = new WorkflowProcessor(disabledConfig);
 
-      await expect(disabledProcessor.processIssue(mockGitHubWebhook))
-        .rejects.toThrow(WorkflowError);
+      await expect(disabledProcessor.processIssue(mockGitHubWebhook)).rejects.toThrow(
+        WorkflowError
+      );
     });
 
     it('should handle agent execution failure', async () => {
@@ -148,8 +146,7 @@ describe('WorkflowProcessor', () => {
         output: '',
       });
 
-      await expect(processor.processIssue(mockGitHubWebhook))
-        .rejects.toThrow(WorkflowError);
+      await expect(processor.processIssue(mockGitHubWebhook)).rejects.toThrow(WorkflowError);
     });
 
     it('should update issue status to failed on error', async () => {
@@ -180,10 +177,7 @@ describe('WorkflowProcessor', () => {
         // Error is expected
       }
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to update error status:',
-        expect.any(Error)
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to update error status:', expect.any(Error));
     });
   });
 
@@ -215,8 +209,7 @@ describe('WorkflowProcessor', () => {
         new WorkflowError('Non-retryable error', 'NON_RETRYABLE', false)
       );
 
-      await expect(processor.processIssue(mockGitHubWebhook))
-        .rejects.toThrow(WorkflowError);
+      await expect(processor.processIssue(mockGitHubWebhook)).rejects.toThrow(WorkflowError);
 
       expect(mockGitHubService.createBranch).toHaveBeenCalledTimes(1);
     });
@@ -226,8 +219,7 @@ describe('WorkflowProcessor', () => {
         new WorkflowError('Always fails', 'ALWAYS_FAILS', true)
       );
 
-      await expect(processor.processIssue(mockGitHubWebhook))
-        .rejects.toThrow(WorkflowError);
+      await expect(processor.processIssue(mockGitHubWebhook)).rejects.toThrow(WorkflowError);
 
       expect(mockGitHubService.createBranch).toHaveBeenCalledTimes(4); // Initial + 3 retries
     });
@@ -258,7 +250,7 @@ describe('WorkflowProcessor', () => {
 
     it('should cap delay at maximum', async () => {
       const delays: number[] = [];
-      
+
       // Set a config with small max delay to test capping
       const cappedConfig = {
         ...mockConfig,
@@ -268,7 +260,7 @@ describe('WorkflowProcessor', () => {
         },
       };
       const cappedProcessor = new WorkflowProcessor(cappedConfig);
-      
+
       (cappedProcessor as any).sleep = vi.fn((ms: number) => {
         delays.push(ms);
         return Promise.resolve();

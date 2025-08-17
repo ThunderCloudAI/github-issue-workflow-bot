@@ -38,7 +38,7 @@ export class WebhookHandler {
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        service: 'github-webhook-handler'
+        service: 'github-webhook-handler',
       });
     });
 
@@ -50,7 +50,7 @@ export class WebhookHandler {
       console.error('Webhook handler error:', error);
       res.status(500).json({
         error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     });
   }
@@ -60,7 +60,7 @@ export class WebhookHandler {
       // Verify GitHub signature
       const signature = req.headers['x-hub-signature-256'] as string;
       const payload = req.body;
-      
+
       if (!this.verifySignature(signature, payload)) {
         res.status(401).json({ error: 'Invalid signature' });
         return;
@@ -68,7 +68,7 @@ export class WebhookHandler {
 
       // Parse the webhook payload
       const webhookData: GitHubWebhook = JSON.parse(payload.toString());
-      
+
       // Filter for issue events we care about
       if (!this.shouldProcessWebhook(webhookData)) {
         res.status(200).json({ message: 'Event ignored' });
@@ -77,17 +77,18 @@ export class WebhookHandler {
 
       // Send to SQS for processing
       await this.enqueueWebhook(webhookData);
-      
-      console.log(`Webhook queued for issue ${webhookData.issue.number}: ${webhookData.issue.title}`);
-      
-      res.status(200).json({ 
-        message: 'Webhook received and queued for processing',
-        issueNumber: webhookData.issue.number
-      });
 
+      console.log(
+        `Webhook queued for issue ${webhookData.issue.number}: ${webhookData.issue.title}`
+      );
+
+      res.status(200).json({
+        message: 'Webhook received and queued for processing',
+        issueNumber: webhookData.issue.number,
+      });
     } catch (error) {
       console.error('Failed to handle webhook:', error);
-      
+
       if (error instanceof WorkflowError) {
         res.status(400).json({ error: error.message });
       } else {
@@ -107,10 +108,7 @@ export class WebhookHandler {
         .update(payload)
         .digest('hex')}`;
 
-      return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expectedSignature)
-      );
+      return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
     } catch (error) {
       console.error('Signature verification failed:', error);
       return false;
@@ -131,7 +129,7 @@ export class WebhookHandler {
     // Skip if issue has labels we want to ignore
     const ignoredLabels = ['wontfix', 'duplicate', 'invalid', 'question'];
     const issueLabels = webhook.issue.labels.map(label => label.name.toLowerCase());
-    
+
     if (ignoredLabels.some(label => issueLabels.includes(label))) {
       return false;
     }
@@ -148,24 +146,24 @@ export class WebhookHandler {
   private async enqueueWebhook(webhook: GitHubWebhook): Promise<void> {
     try {
       const messageBody = JSON.stringify(webhook);
-      
+
       const command = new SendMessageCommand({
         QueueUrl: this.config.queueUrl,
         MessageBody: messageBody,
         MessageAttributes: {
           'event-type': {
             DataType: 'String',
-            StringValue: 'github-issue-opened'
+            StringValue: 'github-issue-opened',
           },
-          'repository': {
+          repository: {
             DataType: 'String',
-            StringValue: webhook.repository.full_name
+            StringValue: webhook.repository.full_name,
           },
           'issue-number': {
             DataType: 'Number',
-            StringValue: webhook.issue.number.toString()
-          }
-        }
+            StringValue: webhook.issue.number.toString(),
+          },
+        },
       });
 
       await this.sqsClient.send(command);
@@ -180,7 +178,7 @@ export class WebhookHandler {
   }
 
   start(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const server = this.app.listen(this.config.port, () => {
         console.log(`Webhook handler listening on port ${this.config.port}`);
         resolve();

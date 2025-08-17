@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TechLeadAgent } from './tech-lead.agent';
 import { WorkflowError } from '../types';
-import { MockClaudeRunner, RealClaudeRunner, createMockClaudeRunner, createErrorMockClaudeRunner } from '../claude';
+import {
+  MockClaudeRunner,
+  RealClaudeRunner,
+  createMockClaudeRunner,
+  createErrorMockClaudeRunner,
+} from '../claude';
 import { mockWorkflowContext } from '../test/fixtures';
 
 describe('Claude Integration Patterns', () => {
@@ -55,11 +60,13 @@ describe('Claude Integration Patterns', () => {
     });
 
     it('should handle Claude runner errors gracefully', async () => {
-      const errorClaudeRunner = createErrorMockClaudeRunner(new Error('Claude service unavailable'));
+      const errorClaudeRunner = createErrorMockClaudeRunner(
+        new Error('Claude service unavailable')
+      );
       const errorAgent = new TechLeadAgent(errorClaudeRunner);
 
       const result = await errorAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.output).toBe('');
       expect(result.error).toContain('Claude service unavailable');
@@ -67,13 +74,13 @@ describe('Claude Integration Patterns', () => {
 
     it('should respect timeout settings from agent', async () => {
       const shortTimeoutAgent = new TechLeadAgent(mockClaudeRunner, 100);
-      
+
       // Mock a slow response
       mockClaudeRunner.setDelay(200);
       mockClaudeRunner.setResponse('Slow response');
 
       const result = await shortTimeoutAgent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('timed out');
     });
@@ -81,7 +88,7 @@ describe('Claude Integration Patterns', () => {
     it('should pass prompts correctly to Claude runner', async () => {
       const spyRunner = new MockClaudeRunner();
       const runPromptSpy = vi.spyOn(spyRunner, 'runPrompt');
-      
+
       spyRunner.setResponse('Analysis result');
       const spyAgent = new TechLeadAgent(spyRunner);
 
@@ -89,7 +96,7 @@ describe('Claude Integration Patterns', () => {
 
       expect(runPromptSpy).toHaveBeenCalledOnce();
       const calledPrompt = runPromptSpy.mock.calls[0][0];
-      
+
       // Verify prompt contains required elements
       expect(calledPrompt).toContain('expert tech lead');
       expect(calledPrompt).toContain(mockWorkflowContext.title);
@@ -105,7 +112,7 @@ describe('Claude Integration Patterns', () => {
       const mockRunner = new MockClaudeRunner();
       mockRunner.setResponse('Mock response');
       const mockAgent = new TechLeadAgent(mockRunner);
-      
+
       const mockResult = await mockAgent.execute(mockWorkflowContext);
       expect(mockResult.success).toBe(true);
       expect(mockResult.output).toBe('Mock response');
@@ -113,7 +120,7 @@ describe('Claude Integration Patterns', () => {
       // Test that RealClaudeRunner would also work (without actually running it)
       const realRunner = new RealClaudeRunner();
       const realAgent = new TechLeadAgent(realRunner);
-      
+
       // Just verify the agent can be constructed with real runner
       expect(realAgent).toBeInstanceOf(TechLeadAgent);
     });
@@ -123,7 +130,10 @@ describe('Claude Integration Patterns', () => {
         { name: 'simple text', response: 'Simple response' },
         { name: 'empty string', response: '' },
         { name: 'multiline response', response: 'Line 1\nLine 2\nLine 3' },
-        { name: 'formatted analysis', response: '## Analysis\n\n### Summary\nDetailed analysis here' }
+        {
+          name: 'formatted analysis',
+          response: '## Analysis\n\n### Summary\nDetailed analysis here',
+        },
       ];
 
       for (const scenario of scenarios) {
@@ -132,7 +142,7 @@ describe('Claude Integration Patterns', () => {
         const agent = new TechLeadAgent(runner);
 
         const result = await agent.execute(mockWorkflowContext);
-        
+
         expect(result.success).toBe(true);
         expect(result.output).toBe(scenario.response);
       }
@@ -145,20 +155,20 @@ describe('Claude Integration Patterns', () => {
       const agent = new TechLeadAgent(timeoutRunner);
 
       const result = await agent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Timeout error');
     });
 
     it('should wrap non-WorkflowError exceptions', async () => {
       const faultyRunner = {
-        runPrompt: vi.fn().mockRejectedValue(new Error('Unexpected error'))
+        runPrompt: vi.fn().mockRejectedValue(new Error('Unexpected error')),
       };
-      
+
       const agent = new TechLeadAgent(faultyRunner as any);
 
       const result = await agent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Unexpected error');
     });
@@ -166,13 +176,13 @@ describe('Claude Integration Patterns', () => {
     it('should maintain error context through the chain', async () => {
       const originalError = new Error('Original Claude error');
       const errorRunner = {
-        runPrompt: vi.fn().mockRejectedValue(originalError)
+        runPrompt: vi.fn().mockRejectedValue(originalError),
       };
-      
+
       const agent = new TechLeadAgent(errorRunner as any);
 
       const result = await agent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Original Claude error');
     });
@@ -182,9 +192,9 @@ describe('Claude Integration Patterns', () => {
     it('should handle concurrent Claude runner calls', async () => {
       const runner = new MockClaudeRunner();
       runner.setResponse('Concurrent response');
-      
+
       const agents = Array.from({ length: 5 }, () => new TechLeadAgent(runner));
-      
+
       const promises = agents.map(agent => agent.execute(mockWorkflowContext));
       const results = await Promise.all(promises);
 
@@ -198,7 +208,7 @@ describe('Claude Integration Patterns', () => {
       const largeResponse = 'x'.repeat(10000); // 10KB response
       const runner = new MockClaudeRunner();
       runner.setResponse(largeResponse);
-      
+
       const agent = new TechLeadAgent(runner);
       const result = await agent.execute(mockWorkflowContext);
 
@@ -215,7 +225,7 @@ describe('Claude Integration Patterns', () => {
       const agent = new TechLeadAgent(failingRunner);
 
       const result = await agent.execute(mockWorkflowContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Claude not available');
     });
@@ -224,14 +234,14 @@ describe('Claude Integration Patterns', () => {
       const runner = new MockClaudeRunner();
       const runPromptSpy = vi.spyOn(runner, 'runPrompt');
       const agent = new TechLeadAgent(runner);
-      
+
       const invalidContext = { ...mockWorkflowContext, title: '' };
 
       const result = await agent.execute(invalidContext);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Invalid workflow context');
-      
+
       // Claude runner should not have been called
       expect(runPromptSpy).not.toHaveBeenCalled();
     });

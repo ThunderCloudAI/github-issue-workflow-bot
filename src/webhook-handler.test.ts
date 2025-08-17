@@ -10,7 +10,7 @@ import { MockSQSClient } from './aws/sqs-client.mock';
 // Mock AWS SDK commands for actual SQS client wrapper
 vi.mock('@aws-sdk/client-sqs', () => ({
   SQSClient: vi.fn(),
-  SendMessageCommand: vi.fn((input) => ({ input })),
+  SendMessageCommand: vi.fn(input => ({ input })),
 }));
 
 const mockWebhookConfig: WebhookConfig = {
@@ -31,7 +31,7 @@ describe('WebhookHandler', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    
+
     // Create mock SQS client and inject it
     mockSQSClient = new MockSQSClient();
     webhookHandler = new WebhookHandler(mockWebhookConfig, mockSQSClient);
@@ -47,9 +47,7 @@ describe('WebhookHandler', () => {
 
   describe('health endpoint', () => {
     it('should return healthy status', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       expect(response.body).toEqual({
         status: 'healthy',
@@ -60,11 +58,10 @@ describe('WebhookHandler', () => {
   });
 
   describe('webhook endpoint', () => {
-
     it('should successfully process valid webhook', async () => {
       const payload = JSON.stringify(mockGitHubWebhook);
       const signature = generateSignature(payload, mockWebhookConfig.secret);
-      
+
       mockSQSClient.setResponse('SendMessageCommand', {});
 
       const response = await request(app)
@@ -172,7 +169,7 @@ describe('WebhookHandler', () => {
     it('should handle SQS enqueue errors', async () => {
       const payload = JSON.stringify(mockGitHubWebhook);
       const signature = generateSignature(payload, mockWebhookConfig.secret);
-      
+
       mockSQSClient.setError('SendMessageCommand', new Error('SQS error'));
 
       const response = await request(app)
@@ -202,9 +199,10 @@ describe('WebhookHandler', () => {
     it('should handle WorkflowError appropriately', async () => {
       const payload = JSON.stringify(mockGitHubWebhook);
       const signature = generateSignature(payload, mockWebhookConfig.secret);
-      
+
       // Mock enqueueWebhook to throw WorkflowError
-      const enqueueWebhookSpy = vi.spyOn(webhookHandler as any, 'enqueueWebhook')
+      const enqueueWebhookSpy = vi
+        .spyOn(webhookHandler as any, 'enqueueWebhook')
         .mockRejectedValue(new WorkflowError('Test workflow error', 'TEST_ERROR'));
 
       const response = await request(app)
@@ -250,10 +248,9 @@ describe('WebhookHandler', () => {
       const consoleSpy = vi.spyOn(console, 'error');
 
       // Spy on crypto.timingSafeEqual and make it throw
-      const timingSafeEqualSpy = vi.spyOn(crypto, 'timingSafeEqual')
-        .mockImplementation(() => {
-          throw new Error('Crypto error');
-        });
+      const timingSafeEqualSpy = vi.spyOn(crypto, 'timingSafeEqual').mockImplementation(() => {
+        throw new Error('Crypto error');
+      });
 
       const isValid = (webhookHandler as any).verifySignature('sha256=test', payload);
 
@@ -293,7 +290,7 @@ describe('WebhookHandler', () => {
 
     it('should not process issues with ignored labels', () => {
       const ignoredLabels = ['wontfix', 'duplicate', 'invalid', 'question'];
-      
+
       for (const labelName of ignoredLabels) {
         const webhook = {
           ...mockGitHubWebhook,
@@ -338,7 +335,7 @@ describe('WebhookHandler', () => {
 
       // Verify the mock SQS client was called
       expect(mockSQSClient.getCallCount()).toBe(1);
-      
+
       // Check if the correct command was sent with proper input
       const expectedInput = {
         QueueUrl: mockWebhookConfig.queueUrl,
@@ -348,7 +345,7 @@ describe('WebhookHandler', () => {
             DataType: 'String',
             StringValue: 'github-issue-opened',
           },
-          'repository': {
+          repository: {
             DataType: 'String',
             StringValue: mockGitHubWebhook.repository.full_name,
           },
@@ -358,15 +355,16 @@ describe('WebhookHandler', () => {
           },
         },
       };
-      
+
       expect(mockSQSClient.wasCalledWith('SendMessageCommand', expectedInput)).toBe(true);
     });
 
     it('should throw WorkflowError on SQS failure', async () => {
       mockSQSClient.setError('SendMessageCommand', new Error('SQS send failed'));
 
-      await expect((webhookHandler as any).enqueueWebhook(mockGitHubWebhook))
-        .rejects.toThrow(WorkflowError);
+      await expect((webhookHandler as any).enqueueWebhook(mockGitHubWebhook)).rejects.toThrow(
+        WorkflowError
+      );
 
       try {
         await (webhookHandler as any).enqueueWebhook(mockGitHubWebhook);
@@ -377,11 +375,10 @@ describe('WebhookHandler', () => {
     });
   });
 
-
   describe('start method', () => {
     it('should start the server on configured port', async () => {
       const consoleSpy = vi.spyOn(console, 'log');
-      
+
       // Mock express app.listen to immediately call callback
       const mockListen = vi.fn((port, callback) => {
         callback();

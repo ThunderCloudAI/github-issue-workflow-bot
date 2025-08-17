@@ -3,6 +3,7 @@
 This file is created to test the automated CI/CD pipeline.
 
 ## What should happen:
+
 - ESLint should check this file
 - Prettier should format this file
 - TypeScript compilation should pass

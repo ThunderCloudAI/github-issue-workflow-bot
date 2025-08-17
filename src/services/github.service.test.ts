@@ -30,7 +30,7 @@ describe('GitHubService', () => {
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
-    
+
     githubService = new GitHubService('test-token');
     // Access the mocked octokit instance
     mockOctokit = (githubService as any).octokit;
@@ -61,21 +61,21 @@ describe('GitHubService', () => {
       mockOctokit.repos.getBranch.mockResolvedValue(mockOctokitResponse.repos.getBranch);
       mockOctokit.git.createRef.mockRejectedValue({ status: 422 });
 
-      await expect(githubService.createBranch(mockWorkflowContext))
-        .rejects.toThrow(WorkflowError);
-      
-      await expect(githubService.createBranch(mockWorkflowContext))
-        .rejects.toThrow('Branch already exists or invalid branch name');
+      await expect(githubService.createBranch(mockWorkflowContext)).rejects.toThrow(WorkflowError);
+
+      await expect(githubService.createBranch(mockWorkflowContext)).rejects.toThrow(
+        'Branch already exists or invalid branch name'
+      );
     });
 
     it('should throw WorkflowError when repository not found', async () => {
       mockOctokit.repos.getBranch.mockRejectedValue({ status: 404 });
 
-      await expect(githubService.createBranch(mockWorkflowContext))
-        .rejects.toThrow(WorkflowError);
-      
-      await expect(githubService.createBranch(mockWorkflowContext))
-        .rejects.toThrow('Repository not found or insufficient permissions');
+      await expect(githubService.createBranch(mockWorkflowContext)).rejects.toThrow(WorkflowError);
+
+      await expect(githubService.createBranch(mockWorkflowContext)).rejects.toThrow(
+        'Repository not found or insufficient permissions'
+      );
     });
 
     it('should throw retryable WorkflowError for other errors', async () => {
@@ -185,11 +185,13 @@ describe('GitHubService', () => {
     it('should throw error when branch name is missing', async () => {
       const contextWithoutBranch = { ...mockWorkflowContext, branchName: undefined };
 
-      await expect(githubService.createPullRequest(contextWithoutBranch, mockAgentResult))
-        .rejects.toThrow(WorkflowError);
-      
-      await expect(githubService.createPullRequest(contextWithoutBranch, mockAgentResult))
-        .rejects.toThrow('Branch name is required for PR creation');
+      await expect(
+        githubService.createPullRequest(contextWithoutBranch, mockAgentResult)
+      ).rejects.toThrow(WorkflowError);
+
+      await expect(
+        githubService.createPullRequest(contextWithoutBranch, mockAgentResult)
+      ).rejects.toThrow('Branch name is required for PR creation');
     });
 
     it('should handle PR already exists error', async () => {

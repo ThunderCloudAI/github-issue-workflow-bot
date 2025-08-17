@@ -57,12 +57,16 @@ export class GitHubService {
     }
   }
 
-  async updateIssueStatus(context: WorkflowContext, status: string, details?: string): Promise<void> {
+  async updateIssueStatus(
+    context: WorkflowContext,
+    status: string,
+    details?: string
+  ): Promise<void> {
     try {
       const { owner, repository, issueNumber } = context;
-      
+
       const comment = this.formatStatusComment(status, details);
-      
+
       await this.octokit.issues.createComment({
         owner,
         repo: repository,
@@ -77,15 +81,11 @@ export class GitHubService {
         issue_number: issueNumber,
         labels: [`workflow:${status}`],
       });
-
     } catch (error: any) {
       if (error.status === 404) {
-        throw new WorkflowError(
-          'Issue not found',
-          'ISSUE_NOT_FOUND',
-          false,
-          { issueNumber: context.issueNumber }
-        );
+        throw new WorkflowError('Issue not found', 'ISSUE_NOT_FOUND', false, {
+          issueNumber: context.issueNumber,
+        });
       }
       throw new WorkflowError(
         `Failed to update issue status: ${error.message}`,
@@ -99,16 +99,15 @@ export class GitHubService {
   async addTechLeadAnalysis(context: WorkflowContext, analysis: string): Promise<void> {
     try {
       const { owner, repository, issueNumber } = context;
-      
+
       const comment = `## 🤖 Tech Lead Analysis\n\n${analysis}\n\n---\n*Generated automatically by workflow system*`;
-      
+
       await this.octokit.issues.createComment({
         owner,
         repo: repository,
         issue_number: issueNumber,
         body: comment,
       });
-
     } catch (error: any) {
       throw new WorkflowError(
         `Failed to add tech lead analysis: ${error.message}`,
@@ -122,7 +121,7 @@ export class GitHubService {
   async createPullRequest(context: WorkflowContext, result: AgentResult): Promise<string> {
     try {
       const { owner, repository, issueNumber, branchName, title } = context;
-      
+
       if (!branchName) {
         throw new WorkflowError('Branch name is required for PR creation', 'MISSING_BRANCH', false);
       }
@@ -166,11 +165,11 @@ export class GitHubService {
   private formatStatusComment(status: string, details?: string): string {
     const timestamp = new Date().toISOString();
     let comment = `## 🔄 Workflow Status Update\n\n**Status:** ${status}\n**Timestamp:** ${timestamp}\n`;
-    
+
     if (details) {
       comment += `\n**Details:**\n${details}\n`;
     }
-    
+
     comment += '\n---\n*Automated workflow system*';
     return comment;
   }

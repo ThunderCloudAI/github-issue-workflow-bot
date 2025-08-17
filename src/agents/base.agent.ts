@@ -14,36 +14,38 @@ export abstract class BaseAgent {
 
   async execute(context: WorkflowContext): Promise<AgentResult> {
     const startTime = Date.now();
-    
+
     try {
       // Set up timeout
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(new WorkflowError(
-            `Agent ${this.type} timed out after ${this.timeout}ms`,
-            'AGENT_TIMEOUT',
-            true
-          ));
+          reject(
+            new WorkflowError(
+              `Agent ${this.type} timed out after ${this.timeout}ms`,
+              'AGENT_TIMEOUT',
+              true
+            )
+          );
         }, this.timeout);
       });
 
       // Execute agent logic
       const resultPromise = this.processIssue(context);
-      
+
       const result = await Promise.race([resultPromise, timeoutPromise]);
-      
+
       const duration = Date.now() - startTime;
       console.log(`Agent ${this.type} completed in ${duration}ms`);
-      
+
       return result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
       console.error(`Agent ${this.type} failed after ${duration}ms:`, error);
-      
+
       return {
         success: false,
         output: '',
-        error: error?.message || 'Unknown agent error'
+        error: error?.message || 'Unknown agent error',
       };
     }
   }

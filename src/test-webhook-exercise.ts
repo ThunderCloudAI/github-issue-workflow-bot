@@ -38,17 +38,13 @@ We need to implement a secure user authentication system with the following feat
 - Include unit and integration tests`,
       user: {
         login: 'developer123',
-        id: 987654321
+        id: 987654321,
       },
-      labels: [
-        { name: 'feature' },
-        { name: 'backend' },
-        { name: 'high-priority' }
-      ],
+      labels: [{ name: 'feature' }, { name: 'backend' }, { name: 'high-priority' }],
       assignee: null,
       state: 'open',
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     repository: {
       id: 456789123,
@@ -56,15 +52,15 @@ We need to implement a secure user authentication system with the following feat
       full_name: 'company/webapp-backend',
       owner: {
         login: 'company',
-        id: 111222333
+        id: 111222333,
       },
       private: false,
-      default_branch: 'main'
+      default_branch: 'main',
     },
     sender: {
       login: 'developer123',
-      id: 987654321
-    }
+      id: 987654321,
+    },
   };
 }
 
@@ -82,7 +78,7 @@ function createWorkflowContext(webhookEvent: any): WorkflowContext {
     status: WorkflowStatus.PENDING,
     retryCount: 0,
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
 }
 
@@ -103,7 +99,9 @@ async function exerciseTechLeadAgent() {
     // Step 1: Create mock webhook event
     console.log('📦 Step 1: Creating mock GitHub webhook event...');
     const webhookEvent = createMockWebhookEvent();
-    console.log(`✅ Created webhook event for issue #${webhookEvent.issue.number}: "${webhookEvent.issue.title}"`);
+    console.log(
+      `✅ Created webhook event for issue #${webhookEvent.issue.number}: "${webhookEvent.issue.title}"`
+    );
     console.log('');
 
     // Step 2: Convert to workflow context
@@ -156,16 +154,15 @@ async function exerciseTechLeadAgent() {
 
     console.log('');
     console.log('🎉 TechLeadAgent exercise completed successfully!');
-
   } catch (error: any) {
     console.error('💥 Exercise failed with error:');
     console.error(`   Type: ${error.constructor.name}`);
     console.error(`   Message: ${error.message}`);
-    
+
     if (error.code) {
       console.error(`   Code: ${error.code}`);
     }
-    
+
     if (error.stack) {
       console.error('\n📚 Stack trace:');
       console.error(error.stack);
@@ -182,7 +179,7 @@ console.log(`- Arguments: ${process.argv.slice(2).join(' ') || 'none'}`);
 console.log('');
 
 // Handle uncaught errors
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('💥 Uncaught exception:', error);
   process.exit(1);
 });

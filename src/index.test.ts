@@ -15,7 +15,7 @@ describe('Main Application', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Reset environment variables
     process.env.GITHUB_TOKEN = 'test-token';
     process.env.GITHUB_WEBHOOK_SECRET = 'test-secret';
@@ -26,12 +26,12 @@ describe('Main Application', () => {
     mockProcessor = {
       healthCheck: vi.fn(),
     };
-    
+
     mockConsumer = {
       healthCheck: vi.fn(),
       start: vi.fn(),
     };
-    
+
     mockWebhookHandler = {
       start: vi.fn(),
     };
@@ -46,10 +46,10 @@ describe('Main Application', () => {
     it('should validate required environment variables', async () => {
       // Import main function
       const { default: main } = await import('./index');
-      
+
       // Missing required env var
       delete process.env.GITHUB_TOKEN;
-      
+
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
       const consoleSpy = vi.spyOn(console, 'error');
 
@@ -58,7 +58,7 @@ describe('Main Application', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         'Failed to start application:',
         expect.objectContaining({
-          message: expect.stringContaining('Missing required environment variables: GITHUB_TOKEN')
+          message: expect.stringContaining('Missing required environment variables: GITHUB_TOKEN'),
         })
       );
       expect(exitSpy).toHaveBeenCalledWith(1);
@@ -72,7 +72,7 @@ describe('Main Application', () => {
 
       // Import and run main
       const { default: main } = await import('./index');
-      
+
       // Mock console.log to capture output
       const consoleSpy = vi.spyOn(console, 'log');
 
@@ -90,7 +90,7 @@ describe('Main Application', () => {
       mockWebhookHandler.start.mockResolvedValue(undefined);
 
       const { default: main } = await import('./index');
-      
+
       await main();
 
       expect(mockProcessor.healthCheck).toHaveBeenCalled();
@@ -105,13 +105,13 @@ describe('Main Application', () => {
       const consoleSpy = vi.spyOn(console, 'error');
 
       const { default: main } = await import('./index');
-      
+
       await main();
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Failed to start application:',
         expect.objectContaining({
-          message: 'Health checks failed'
+          message: 'Health checks failed',
         })
       );
       expect(exitSpy).toHaveBeenCalledWith(1);
@@ -128,7 +128,7 @@ describe('Main Application', () => {
       const consoleSpy = vi.spyOn(console, 'log');
 
       const { default: main } = await import('./index');
-      
+
       await main();
 
       expect(mockWebhookHandler.start).toHaveBeenCalled();
@@ -146,13 +146,13 @@ describe('Main Application', () => {
       const consoleSpy = vi.spyOn(console, 'error');
 
       const { default: main } = await import('./index');
-      
+
       await main();
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Failed to start application:',
         expect.objectContaining({
-          message: 'Consumer startup failed'
+          message: 'Consumer startup failed',
         })
       );
       expect(exitSpy).toHaveBeenCalledWith(1);
@@ -174,7 +174,7 @@ describe('Main Application', () => {
       // Clear module cache to ensure fresh import with new env vars
       vi.resetModules();
       const { default: main } = await import('./index');
-      
+
       await main();
 
       // Verify WorkflowProcessor was called with correct config
@@ -214,7 +214,7 @@ describe('Main Application', () => {
       // Clear module cache to ensure fresh import with new env vars
       vi.resetModules();
       const { default: main } = await import('./index');
-      
+
       await main();
 
       // Verify defaults were used
@@ -261,7 +261,12 @@ describe('Main Application', () => {
       const promise = Promise.reject(reason);
       process.emit('unhandledRejection', reason, promise);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Unhandled rejection at:', promise, 'reason:', reason);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Unhandled rejection at:',
+        promise,
+        'reason:',
+        reason
+      );
       expect(exitSpy).toHaveBeenCalledWith(1);
     });
   });
@@ -269,7 +274,7 @@ describe('Main Application', () => {
   describe('exports', () => {
     it('should export all main components', async () => {
       const module = await import('./index');
-      
+
       expect(module.WorkflowProcessor).toBeDefined();
       expect(module.SQSConsumer).toBeDefined();
       expect(module.WebhookHandler).toBeDefined();

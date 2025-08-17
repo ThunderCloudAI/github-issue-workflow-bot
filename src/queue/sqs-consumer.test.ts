@@ -8,8 +8,8 @@ import { MockSQSClient } from '../aws/sqs-client.mock';
 // Mock AWS SDK commands for actual SQS client wrapper
 vi.mock('@aws-sdk/client-sqs', () => ({
   SQSClient: vi.fn(),
-  ReceiveMessageCommand: vi.fn((input) => ({ input })),
-  DeleteMessageCommand: vi.fn((input) => ({ input })),
+  ReceiveMessageCommand: vi.fn(input => ({ input })),
+  DeleteMessageCommand: vi.fn(input => ({ input })),
 }));
 
 const mockSQSConfig: SQSConfig = {
@@ -27,7 +27,7 @@ describe('SQSConsumer', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    
+
     mockProcessor = {
       processIssue: vi.fn(),
     };
@@ -49,7 +49,7 @@ describe('SQSConsumer', () => {
   describe('start and stop', () => {
     it('should start polling when not already running', async () => {
       const pollSpy = vi.spyOn(consumer as any, 'pollMessages').mockResolvedValue(undefined);
-      
+
       // Mock to run only once to avoid infinite loop in test
       let callCount = 0;
       (consumer as any).isRunning = false;
@@ -88,7 +88,7 @@ describe('SQSConsumer', () => {
     it('should handle polling errors with retry delay', async () => {
       const sleepSpy = vi.spyOn(consumer as any, 'sleep').mockResolvedValue(undefined);
       const pollSpy = vi.spyOn(consumer as any, 'pollMessages');
-      
+
       let callCount = 0;
       pollSpy.mockImplementation(() => {
         callCount++;
@@ -117,12 +117,14 @@ describe('SQSConsumer', () => {
 
     it('should poll messages from SQS', async () => {
       const { ReceiveMessageCommand } = await import('@aws-sdk/client-sqs');
-      
+
       mockSQSClient.setResponse('ReceiveMessageCommand', {
         Messages: [mockSQSMessage],
       });
 
-      const processMessageSpy = vi.spyOn(consumer as any, 'processMessage').mockResolvedValue(undefined);
+      const processMessageSpy = vi
+        .spyOn(consumer as any, 'processMessage')
+        .mockResolvedValue(undefined);
 
       await (consumer as any).pollMessages();
 
@@ -138,7 +140,9 @@ describe('SQSConsumer', () => {
     it('should handle empty message response', async () => {
       mockSQSClient.setResponse('ReceiveMessageCommand', { Messages: [] });
 
-      const processMessageSpy = vi.spyOn(consumer as any, 'processMessage').mockResolvedValue(undefined);
+      const processMessageSpy = vi
+        .spyOn(consumer as any, 'processMessage')
+        .mockResolvedValue(undefined);
 
       await (consumer as any).pollMessages();
 
@@ -148,7 +152,9 @@ describe('SQSConsumer', () => {
     it('should handle no messages response', async () => {
       mockSQSClient.setResponse('ReceiveMessageCommand', {});
 
-      const processMessageSpy = vi.spyOn(consumer as any, 'processMessage').mockResolvedValue(undefined);
+      const processMessageSpy = vi
+        .spyOn(consumer as any, 'processMessage')
+        .mockResolvedValue(undefined);
 
       await (consumer as any).pollMessages();
 
@@ -158,8 +164,7 @@ describe('SQSConsumer', () => {
     it('should handle SQS polling errors', async () => {
       mockSQSClient.setError('ReceiveMessageCommand', new Error('SQS error'));
 
-      await expect((consumer as any).pollMessages())
-        .rejects.toThrow('SQS error');
+      await expect((consumer as any).pollMessages()).rejects.toThrow('SQS error');
     });
 
     it('should process multiple messages in parallel', async () => {
@@ -168,7 +173,9 @@ describe('SQSConsumer', () => {
         Messages: [mockSQSMessage, message2],
       });
 
-      const processMessageSpy = vi.spyOn(consumer as any, 'processMessage').mockResolvedValue(undefined);
+      const processMessageSpy = vi
+        .spyOn(consumer as any, 'processMessage')
+        .mockResolvedValue(undefined);
 
       await (consumer as any).pollMessages();
 
@@ -181,7 +188,9 @@ describe('SQSConsumer', () => {
   describe('processMessage', () => {
     it('should successfully process a valid message', async () => {
       mockProcessor.processIssue.mockResolvedValue(undefined);
-      const deleteMessageSpy = vi.spyOn(consumer as any, 'deleteMessage').mockResolvedValue(undefined);
+      const deleteMessageSpy = vi
+        .spyOn(consumer as any, 'deleteMessage')
+        .mockResolvedValue(undefined);
 
       await (consumer as any).processMessage(mockSQSMessage);
 
@@ -195,7 +204,9 @@ describe('SQSConsumer', () => {
 
       await (consumer as any).processMessage(invalidMessage);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Received message without body or receipt handle, skipping');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Received message without body or receipt handle, skipping'
+      );
       expect(mockProcessor.processIssue).not.toHaveBeenCalled();
     });
 
@@ -231,7 +242,9 @@ describe('SQSConsumer', () => {
       await (consumer as any).processMessage(mockSQSMessage);
 
       expect(consoleSpy).toHaveBeenCalledWith(`Processing message: ${mockSQSMessage.MessageId}`);
-      expect(consoleSpy).toHaveBeenCalledWith(`Successfully processed message: ${mockSQSMessage.MessageId}`);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        `Successfully processed message: ${mockSQSMessage.MessageId}`
+      );
     });
   });
 
@@ -246,11 +259,13 @@ describe('SQSConsumer', () => {
 
     it('should parse SNS wrapped payload', () => {
       const snsPayload = {
-        Records: [{
-          Sns: {
-            Message: JSON.stringify(mockGitHubWebhook),
+        Records: [
+          {
+            Sns: {
+              Message: JSON.stringify(mockGitHubWebhook),
+            },
           },
-        }],
+        ],
       };
 
       const result = (consumer as any).parseWebhookPayload(JSON.stringify(snsPayload));
@@ -260,9 +275,11 @@ describe('SQSConsumer', () => {
 
     it('should parse SQS wrapped payload', () => {
       const sqsPayload = {
-        Records: [{
-          body: JSON.stringify(mockGitHubWebhook),
-        }],
+        Records: [
+          {
+            body: JSON.stringify(mockGitHubWebhook),
+          },
+        ],
       };
 
       const result = (consumer as any).parseWebhookPayload(JSON.stringify(sqsPayload));
@@ -313,7 +330,10 @@ describe('SQSConsumer', () => {
 
       await (consumer as any).deleteMessage('test-receipt-handle');
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to delete message from SQS:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to delete message from SQS:',
+        expect.any(Error)
+      );
     });
   });
 

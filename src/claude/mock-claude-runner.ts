@@ -94,12 +94,14 @@ export class MockClaudeRunner implements IClaudeRunner {
 
     // Return configured response
     if (this.responses.length === 0) {
-      throw new Error('MockClaudeRunner: No responses configured. Use setResponse() or setResponses() first.');
+      throw new Error(
+        'MockClaudeRunner: No responses configured. Use setResponse() or setResponses() first.'
+      );
     }
 
     const responseIndex = Math.min(this.currentResponseIndex, this.responses.length - 1);
     const response = this.responses[responseIndex];
-    
+
     // Advance to next response if available
     if (this.currentResponseIndex < this.responses.length - 1) {
       this.currentResponseIndex++;
