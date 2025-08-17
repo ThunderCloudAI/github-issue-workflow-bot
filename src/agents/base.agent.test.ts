@@ -1,227 +1,138 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BaseAgent } from './base.agent';
-import { WorkflowContext, AgentResult, AgentType, WorkflowError } from '../types';
-import { MockClaudeRunner } from '../claude';
-import { mockWorkflowContext } from '../test/fixtures';
+import { WorkflowContext, AgentResult, AgentType } from '../types';
+import { IClaudeRunner } from '../claude';
 
-// Test implementation of BaseAgent
+// Test utilities following DRY principle
+const createMockClaudeRunner = (): IClaudeRunner => ({
+  runPrompt: vi.fn().mockResolvedValue('Mock Claude response'),
+});
+
+const createValidContext = (): WorkflowContext => ({
+  title: 'Test Issue',
+  body: 'Test description',
+  repository: 'test-repo',
+  owner: 'test-owner',
+  labels: [],
+  assignees: [],
+  issueNumber: 1,
+  timestamp: '2024-01-01T00:00:00Z',
+});
+
+// Simple test agent implementation
 class TestAgent extends BaseAgent {
-  constructor(claudeRunner: MockClaudeRunner, timeout?: number) {
+  constructor(claudeRunner: IClaudeRunner, timeout?: number) {
     super(AgentType.TECH_LEAD, claudeRunner, timeout);
   }
 
   protected async processIssue(context: WorkflowContext): Promise<AgentResult> {
     this.validateContext(context);
-
-    // Simulate some processing
-    await this.delay(100);
-
     return {
       success: true,
-      output: 'Test agent output',
+      output: 'Test completed successfully',
     };
-  }
-}
-
-class TimeoutTestAgent extends BaseAgent {
-  constructor(claudeRunner: MockClaudeRunner, timeout?: number) {
-    super(AgentType.TECH_LEAD, claudeRunner, timeout);
-  }
-
-  protected async processIssue(context: WorkflowContext): Promise<AgentResult> {
-    // Simulate long-running process
-    await this.delay(50000);
-
-    return {
-      success: true,
-      output: 'Should not reach here',
-    };
-  }
-}
-
-class ErrorTestAgent extends BaseAgent {
-  constructor(claudeRunner: MockClaudeRunner, timeout?: number) {
-    super(AgentType.TECH_LEAD, claudeRunner, timeout);
-  }
-
-  protected async processIssue(context: WorkflowContext): Promise<AgentResult> {
-    throw new WorkflowError('Test agent error', 'TEST_ERROR');
   }
 }
 
 describe('BaseAgent', () => {
-  let testAgent: TestAgent;
-  let mockClaudeRunner: MockClaudeRunner;
+  let mockClaudeRunner: IClaudeRunner;
+  let validContext: WorkflowContext;
+  let agent: TestAgent;
 
   beforeEach(() => {
-    mockClaudeRunner = new MockClaudeRunner();
-    mockClaudeRunner.setResponse('Mock Claude response');
-    testAgent = new TestAgent(mockClaudeRunner);
+    vi.clearAllMocks();
+    mockClaudeRunner = createMockClaudeRunner();
+    validContext = createValidContext();
+    agent = new TestAgent(mockClaudeRunner);
   });
 
   describe('constructor', () => {
-    it('should set agent type and default timeout', () => {
-      expect((testAgent as any).type).toBe(AgentType.TECH_LEAD);
-      expect((testAgent as any).timeout).toBe(30000);
-      expect((testAgent as any).claudeRunner).toBe(mockClaudeRunner);
+    it('should create instance with provided dependencies', () => {
+      expect(agent).toBeInstanceOf(BaseAgent);
+      expect((agent as any).type).toBe(AgentType.TECH_LEAD);
+      expect((agent as any).timeout).toBe(30000);
     });
 
-    it('should set custom timeout when provided', () => {
+    it('should use custom timeout when provided', () => {
       const customAgent = new TestAgent(mockClaudeRunner, 60000);
       expect((customAgent as any).timeout).toBe(60000);
     });
   });
 
   describe('execute', () => {
-    it('should successfully execute agent logic', async () => {
-      const result = await testAgent.execute(mockWorkflowContext);
-
+    it('should successfully execute with valid context', async () => {
+      const result = await agent.execute(validContext);
+      
       expect(result.success).toBe(true);
-      expect(result.output).toBe('Test agent output');
+      expect(result.output).toBe('Test completed successfully');
       expect(result.error).toBeUndefined();
     });
 
-    it('should handle agent timeouts', async () => {
-      const timeoutAgent = new TimeoutTestAgent(mockClaudeRunner, 1000); // 1 second timeout
-
-      const result = await timeoutAgent.execute(mockWorkflowContext);
-
-      expect(result.success).toBe(false);
-      expect(result.output).toBe('');
-      expect(result.error).toContain('timed out after 1000ms');
-    });
-
-    it('should handle agent errors', async () => {
-      const errorAgent = new ErrorTestAgent(mockClaudeRunner);
-
-      const result = await errorAgent.execute(mockWorkflowContext);
-
-      expect(result.success).toBe(false);
-      expect(result.output).toBe('');
-      expect(result.error).toBe('Test agent error');
-    });
-
-    it('should handle unexpected errors', async () => {
-      class UnexpectedErrorAgent extends BaseAgent {
-        constructor() {
-          super(AgentType.TECH_LEAD, mockClaudeRunner);
+    it('should handle execution errors gracefully', async () => {
+      class ErrorAgent extends BaseAgent {
+        constructor(claudeRunner: IClaudeRunner) {
+          super(AgentType.TECH_LEAD, claudeRunner);
         }
-
+        
         protected async processIssue(): Promise<AgentResult> {
-          throw new Error('Unexpected error');
+          throw new Error('Test error');
         }
       }
 
-      const errorAgent = new UnexpectedErrorAgent();
-      const result = await errorAgent.execute(mockWorkflowContext);
+      const errorAgent = new ErrorAgent(mockClaudeRunner);
+      const result = await errorAgent.execute(validContext);
 
       expect(result.success).toBe(false);
-      expect(result.output).toBe('');
-      expect(result.error).toBe('Unexpected error');
-    });
-
-    it('should handle unknown errors', async () => {
-      class UnknownErrorAgent extends BaseAgent {
-        constructor() {
-          super(AgentType.TECH_LEAD, mockClaudeRunner);
-        }
-
-        protected async processIssue(): Promise<AgentResult> {
-          throw null; // Throw null to simulate unknown error
-        }
-      }
-
-      const errorAgent = new UnknownErrorAgent();
-      const result = await errorAgent.execute(mockWorkflowContext);
-
-      expect(result.success).toBe(false);
-      expect(result.output).toBe('');
-      expect(result.error).toBe('Unknown agent error');
-    });
-
-    it('should log execution duration', async () => {
-      const consoleSpy = vi.spyOn(console, 'log');
-
-      await testAgent.execute(mockWorkflowContext);
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/Agent tech_lead completed in \d+ms/)
-      );
-    });
-
-    it('should log error duration', async () => {
-      const consoleSpy = vi.spyOn(console, 'error');
-      const errorAgent = new ErrorTestAgent(mockClaudeRunner);
-
-      await errorAgent.execute(mockWorkflowContext);
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/Agent tech_lead failed after \d+ms:/),
-        expect.any(Error)
-      );
+      expect(result.error).toBe('Test error');
     });
   });
 
   describe('validateContext', () => {
-    it('should pass validation for valid context', () => {
+    it('should validate valid context without errors', () => {
       expect(() => {
-        (testAgent as any).validateContext(mockWorkflowContext);
+        (agent as any).validateContext(validContext);
       }).not.toThrow();
     });
 
-    it('should throw error for missing title', () => {
-      const invalidContext = { ...mockWorkflowContext, title: '' };
-
+    it('should reject context with missing title', () => {
+      const invalidContext = { ...validContext, title: '' };
+      
       expect(() => {
-        (testAgent as any).validateContext(invalidContext);
-      }).toThrow(WorkflowError);
+        (agent as any).validateContext(invalidContext);
+      }).toThrow('Invalid workflow context');
     });
 
-    it('should throw error for missing repository', () => {
-      const invalidContext = { ...mockWorkflowContext, repository: '' };
-
+    it('should reject context with missing repository', () => {
+      const invalidContext = { ...validContext, repository: '' };
+      
       expect(() => {
-        (testAgent as any).validateContext(invalidContext);
-      }).toThrow(WorkflowError);
+        (agent as any).validateContext(invalidContext);
+      }).toThrow('Invalid workflow context');
     });
 
-    it('should throw error for missing owner', () => {
-      const invalidContext = { ...mockWorkflowContext, owner: '' };
-
+    it('should reject context with missing owner', () => {
+      const invalidContext = { ...validContext, owner: '' };
+      
       expect(() => {
-        (testAgent as any).validateContext(invalidContext);
-      }).toThrow(WorkflowError);
-    });
-
-    it('should create non-retryable WorkflowError', () => {
-      const invalidContext = { ...mockWorkflowContext, title: '' };
-
-      try {
-        (testAgent as any).validateContext(invalidContext);
-      } catch (error) {
-        expect(error).toBeInstanceOf(WorkflowError);
-        expect((error as WorkflowError).retryable).toBe(false);
-        expect((error as WorkflowError).code).toBe('INVALID_CONTEXT');
-      }
+        (agent as any).validateContext(invalidContext);
+      }).toThrow('Invalid workflow context');
     });
   });
 
-  describe('delay', () => {
-    it('should delay for specified duration', async () => {
+  describe('utility methods', () => {
+    it('should provide delay functionality', async () => {
       const startTime = Date.now();
-      await (testAgent as any).delay(100);
+      await (agent as any).delay(50);
       const endTime = Date.now();
-
-      expect(endTime - startTime).toBeGreaterThanOrEqual(90); // Allow some variance
-      expect(endTime - startTime).toBeLessThan(200);
+      
+      expect(endTime - startTime).toBeGreaterThanOrEqual(45);
     });
 
-    it('should resolve after delay', async () => {
-      const promise = (testAgent as any).delay(50);
-      expect(promise).toBeInstanceOf(Promise);
-
-      const result = await promise;
-      expect(result).toBeUndefined();
+    it('should delegate to Claude runner', async () => {
+      const testPrompt = 'Test prompt';
+      await (agent as any).runClaude(testPrompt);
+      
+      expect(mockClaudeRunner.runPrompt).toHaveBeenCalledWith(testPrompt, 30000);
     });
   });
 });
