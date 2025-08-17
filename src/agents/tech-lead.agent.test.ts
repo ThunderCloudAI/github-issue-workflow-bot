@@ -52,7 +52,7 @@ describe('TechLeadAgent', () => {
     it('should successfully process a valid issue', async () => {
       const context = createWorkflowContext();
       const expectedResponse = 'Detailed technical analysis...';
-      
+
       mockClaudeRunner.runPrompt = vi.fn().mockResolvedValue(expectedResponse);
 
       const result = await techLeadAgent.execute(context);
@@ -66,7 +66,7 @@ describe('TechLeadAgent', () => {
     it('should handle Claude runner errors', async () => {
       const context = createWorkflowContext();
       const claudeError = new Error('Claude API failed');
-      
+
       mockClaudeRunner.runPrompt = vi.fn().mockRejectedValue(claudeError);
 
       const result = await techLeadAgent.execute(context);
@@ -79,10 +79,12 @@ describe('TechLeadAgent', () => {
     it('should handle timeout errors', async () => {
       const context = createWorkflowContext();
       const shortTimeout = 10; // Very short timeout
-      
-      mockClaudeRunner.runPrompt = vi.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve('response'), 100))
-      );
+
+      mockClaudeRunner.runPrompt = vi
+        .fn()
+        .mockImplementation(
+          () => new Promise(resolve => setTimeout(() => resolve('response'), 100))
+        );
 
       const agent = new TechLeadAgent(mockClaudeRunner, shortTimeout);
       const result = await agent.execute(context);
@@ -140,11 +142,13 @@ describe('TechLeadAgent', () => {
       await techLeadAgent.execute(context);
 
       const calledPrompt = (mockClaudeRunner.runPrompt as any).mock.calls[0][0];
-      
+
       // Verify prompt contains all expected elements
       expect(calledPrompt).toContain('You are an expert tech lead');
       expect(calledPrompt).toContain('Title: Add user authentication');
-      expect(calledPrompt).toContain('Description: We need to implement OAuth2 authentication for our API');
+      expect(calledPrompt).toContain(
+        'Description: We need to implement OAuth2 authentication for our API'
+      );
       expect(calledPrompt).toContain('Labels: enhancement, security, api');
       expect(calledPrompt).toContain('Repository: acme-corp/api-service');
       expect(calledPrompt).toContain('## Technical Analysis');
@@ -184,7 +188,7 @@ describe('TechLeadAgent', () => {
     it('should throw WorkflowError with correct properties on failure', async () => {
       const context = createWorkflowContext();
       const originalError = new Error('API connection failed');
-      
+
       mockClaudeRunner.runPrompt = vi.fn().mockRejectedValue(originalError);
 
       const result = await techLeadAgent.execute(context);
@@ -200,10 +204,7 @@ describe('TechLeadAgent', () => {
 
       await agent.execute(context);
 
-      expect(mockClaudeRunner.runPrompt).toHaveBeenCalledWith(
-        expect.any(String),
-        customTimeout
-      );
+      expect(mockClaudeRunner.runPrompt).toHaveBeenCalledWith(expect.any(String), customTimeout);
     });
   });
 
@@ -211,7 +212,7 @@ describe('TechLeadAgent', () => {
     it('should handle undefined error message', async () => {
       const context = createWorkflowContext();
       const errorWithoutMessage = { someProperty: 'value' };
-      
+
       mockClaudeRunner.runPrompt = vi.fn().mockRejectedValue(errorWithoutMessage);
 
       const result = await techLeadAgent.execute(context);
@@ -222,7 +223,7 @@ describe('TechLeadAgent', () => {
 
     it('should handle null error', async () => {
       const context = createWorkflowContext();
-      
+
       mockClaudeRunner.runPrompt = vi.fn().mockRejectedValue(null);
 
       const result = await techLeadAgent.execute(context);
@@ -242,14 +243,14 @@ describe('TechLeadAgent', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Agent tech_lead completed in')
       );
-      
+
       consoleSpy.mockRestore();
     });
 
     it('should measure execution duration on failure', async () => {
       const context = createWorkflowContext();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       mockClaudeRunner.runPrompt = vi.fn().mockRejectedValue(new Error('Test error'));
 
       await techLeadAgent.execute(context);
@@ -258,7 +259,7 @@ describe('TechLeadAgent', () => {
         expect.stringContaining('Agent tech_lead failed after'),
         expect.any(Object)
       );
-      
+
       consoleErrorSpy.mockRestore();
     });
 
@@ -268,10 +269,8 @@ describe('TechLeadAgent', () => {
 
       await techLeadAgent.execute(context);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Agent tech_lead completed')
-      );
-      
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Agent tech_lead completed'));
+
       consoleSpy.mockRestore();
     });
   });

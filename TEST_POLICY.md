@@ -7,12 +7,14 @@ This document outlines the testing standards and practices for the GitHub Issue 
 ## Core Testing Principles
 
 ### 1. DRY (Don't Repeat Yourself)
+
 - **Test Utilities**: Create reusable test helpers and fixtures
 - **Shared Setup**: Use `beforeEach`/`afterEach` for common test setup
 - **Factory Functions**: Build data factories for test objects
 - **Custom Matchers**: Create domain-specific assertion helpers
 
 ### 2. SOLID Principles in Testing
+
 - **Single Responsibility**: Each test should verify one specific behavior
 - **Open/Closed**: Tests should be easily extensible without modification
 - **Liskov Substitution**: Mocks should behave identically to real implementations
@@ -20,6 +22,7 @@ This document outlines the testing standards and practices for the GitHub Issue 
 - **Dependency Inversion**: Test against abstractions, not concrete implementations
 
 ### 3. Dependency Inversion
+
 - **Interface-Based Testing**: Test against TypeScript interfaces
 - **Mock Injection**: Inject dependencies rather than importing them directly
 - **Abstraction Layer**: Test business logic separately from infrastructure concerns
@@ -28,6 +31,7 @@ This document outlines the testing standards and practices for the GitHub Issue 
 ## Test Coverage Requirements
 
 ### Coverage Targets
+
 - **Overall Coverage**: 100%
 - **Line Coverage**: 100%
 - **Branch Coverage**: 100%
@@ -35,6 +39,7 @@ This document outlines the testing standards and practices for the GitHub Issue 
 - **Statement Coverage**: 100%
 
 ### Coverage Exclusions
+
 - Generated files (CDK output, compiled JS)
 - Configuration files
 - Type definition files
@@ -43,6 +48,7 @@ This document outlines the testing standards and practices for the GitHub Issue 
 ## Test Structure & Organization
 
 ### File Naming Conventions
+
 ```
 src/
 ├── components/
@@ -58,18 +64,21 @@ src/
 ### Test Categories
 
 #### 1. Unit Tests
+
 - Test individual functions/classes in isolation
 - Mock all external dependencies
 - Fast execution (< 100ms per test)
 - Located alongside source files
 
 #### 2. Integration Tests
+
 - Test component interactions
 - Use real implementations where practical
 - Mock only external services (AWS, GitHub API)
 - Located in `src/test/integration/`
 
 #### 3. Contract Tests
+
 - Verify interface compliance
 - Ensure mocks match real implementations
 - Test API contracts and data structures
@@ -77,16 +86,17 @@ src/
 ## Test Implementation Standards
 
 ### Test Structure (AAA Pattern)
+
 ```typescript
 describe('ComponentName', () => {
   it('should perform expected behavior when given valid input', () => {
     // Arrange - Set up test data and mocks
     const mockDependency = createMockDependency();
     const component = new Component(mockDependency);
-    
+
     // Act - Execute the code under test
     const result = component.methodUnderTest(testInput);
-    
+
     // Assert - Verify the expected outcome
     expect(result).toBe(expectedOutput);
     expect(mockDependency.method).toHaveBeenCalledWith(expectedArgs);
@@ -97,6 +107,7 @@ describe('ComponentName', () => {
 ### Mock Strategy
 
 #### Dependency Injection Pattern
+
 ```typescript
 // ✅ Good - Testable with dependency injection
 class WorkflowProcessor {
@@ -113,6 +124,7 @@ const processor = new WorkflowProcessor(mockGitHub, mockSQS);
 ```
 
 #### Factory Pattern for Mocks
+
 ```typescript
 // test/helpers/mock-factories.ts
 export const createMockGitHubService = (overrides?: Partial<GitHubServiceInterface>) => ({
@@ -126,6 +138,7 @@ export const createMockGitHubService = (overrides?: Partial<GitHubServiceInterfa
 ### Test Data Management
 
 #### Fixture Pattern
+
 ```typescript
 // test/fixtures/github-webhook.ts
 export const githubIssueCreatedFixture = {
@@ -139,26 +152,27 @@ export const githubIssueCreatedFixture = {
   },
   repository: {
     // ... complete valid structure
-  }
+  },
 };
 ```
 
 #### Builder Pattern for Complex Objects
+
 ```typescript
 // test/helpers/workflow-context-builder.ts
 export class WorkflowContextBuilder {
   private context: Partial<WorkflowContext> = {};
-  
+
   withIssueId(id: number) {
     this.context.issueId = id;
     return this;
   }
-  
+
   withStatus(status: WorkflowStatus) {
     this.context.status = status;
     return this;
   }
-  
+
   build(): WorkflowContext {
     return {
       issueId: 1,
@@ -181,6 +195,7 @@ export class WorkflowContextBuilder {
 ## Error Handling & Edge Cases
 
 ### Error Scenarios to Test
+
 - Network failures
 - Invalid input data
 - Authentication failures
@@ -190,12 +205,13 @@ export class WorkflowContextBuilder {
 - Concurrent access issues
 
 ### Error Testing Pattern
+
 ```typescript
 it('should handle network failures gracefully', async () => {
   // Arrange
   const mockService = createMockService();
   mockService.apiCall.mockRejectedValue(new NetworkError('Connection failed'));
-  
+
   // Act & Assert
   await expect(component.performAction()).rejects.toThrow('Connection failed');
   expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Network error'));
@@ -205,6 +221,7 @@ it('should handle network failures gracefully', async () => {
 ## Async Testing Standards
 
 ### Promise Testing
+
 ```typescript
 it('should handle async operations correctly', async () => {
   // ✅ Good - Using async/await
@@ -219,27 +236,28 @@ it('should handle promise rejections', async () => {
 ```
 
 ### Timeout Handling
+
 ```typescript
 it('should timeout long-running operations', async () => {
-  const slowFunction = vi.fn().mockImplementation(() => 
-    new Promise(resolve => setTimeout(resolve, 5000))
-  );
-  
-  await expect(withTimeout(slowFunction(), 1000))
-    .rejects.toThrow('Operation timed out');
+  const slowFunction = vi
+    .fn()
+    .mockImplementation(() => new Promise(resolve => setTimeout(resolve, 5000)));
+
+  await expect(withTimeout(slowFunction(), 1000)).rejects.toThrow('Operation timed out');
 }, 2000); // Test timeout
 ```
 
 ## Performance Testing
 
 ### Benchmark Critical Paths
+
 ```typescript
 describe('Performance Tests', () => {
   it('should process webhook events efficiently', async () => {
     const startTime = performance.now();
-    
+
     await webhookProcessor.process(largeWebhookPayload);
-    
+
     const duration = performance.now() - startTime;
     expect(duration).toBeLessThan(500); // 500ms max
   });
@@ -249,6 +267,7 @@ describe('Performance Tests', () => {
 ## Test Environment Setup
 
 ### Global Setup (test/setup.ts)
+
 ```typescript
 import { vi } from 'vitest';
 
@@ -270,12 +289,14 @@ global.createTestContext = () => {
 ## Continuous Integration Requirements
 
 ### CI Pipeline
+
 - Run tests in parallel when possible
 - Generate coverage reports
 - Fail build if coverage drops below 100%
 - Store test artifacts for debugging
 
 ### Coverage Enforcement
+
 ```typescript
 // vitest.config.ts
 export default defineConfig({
@@ -302,17 +323,20 @@ export default defineConfig({
 ## Code Quality Standards
 
 ### Test Code Quality
+
 - Tests should be as well-written as production code
 - Use TypeScript strictly in tests
 - Apply ESLint rules to test files
 - Regular refactoring of test code
 
 ### Documentation
+
 - Test names should clearly describe the scenario
 - Complex test logic should include comments
 - Document any test-specific setup or teardown
 
 ### Review Guidelines
+
 - All tests must be reviewed before merge
 - Coverage reports must be reviewed
 - Test performance must be considered
@@ -320,12 +344,14 @@ export default defineConfig({
 ## Monitoring & Maintenance
 
 ### Test Health Metrics
+
 - Test execution time trends
 - Flaky test identification
 - Coverage trend analysis
 - Test maintenance overhead
 
 ### Regular Maintenance
+
 - Review and update test fixtures
 - Refactor duplicated test code
 - Update mocks when interfaces change
