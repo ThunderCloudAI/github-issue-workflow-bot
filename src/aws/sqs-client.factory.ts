@@ -21,7 +21,7 @@ export class SQSClientFactory {
    */
   createMockClient(): ISQSClient {
     return {
-      send: () => Promise.resolve({})
+      send: () => Promise.resolve({}),
     };
   }
 }

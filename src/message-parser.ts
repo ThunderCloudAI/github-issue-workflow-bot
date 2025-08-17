@@ -85,12 +85,12 @@ interface RawMessage {
 // Helper functions for parsing different parts
 function parseUsage(rawUsage: any): Usage | undefined {
   if (!rawUsage) return undefined;
-  
+
   return {
     inputTokens: rawUsage.input_tokens,
     outputTokens: rawUsage.output_tokens,
     cacheCreationInputTokens: rawUsage.cache_creation_input_tokens,
-    cacheReadInputTokens: rawUsage.cache_read_input_tokens
+    cacheReadInputTokens: rawUsage.cache_read_input_tokens,
   };
 }
 
@@ -99,24 +99,24 @@ function parseContentItem(item: any): ContentItem {
     case 'text':
       return {
         type: 'text',
-        text: item.text
+        text: item.text,
       };
-    
+
     case 'tool_use':
       return {
         type: 'tool_use',
         id: item.id,
         name: item.name,
-        input: item.input || {}
+        input: item.input || {},
       };
-    
+
     case 'tool_result':
       return {
         type: 'tool_result',
         toolUseId: item.tool_use_id,
-        content: item.content
+        content: item.content,
       };
-    
+
     default:
       throw new Error(`Unknown content type: ${item.type}`);
   }
@@ -135,13 +135,13 @@ function parseSystemMessage(data: RawMessage): SystemMessage {
     numTurns: data.num_turns,
     result: data.result,
     totalCostUsd: data.total_cost_usd,
-    usage: parseUsage(data.usage)
+    usage: parseUsage(data.usage),
   };
 }
 
 function parseConversationMessage(data: RawMessage): ConversationMessage {
   const message = data.message || {};
-  
+
   return {
     type: data.type as 'assistant' | 'user',
     sessionId: data.session_id,
@@ -149,7 +149,7 @@ function parseConversationMessage(data: RawMessage): ConversationMessage {
     role: message.role,
     model: message.model,
     content: message.content ? message.content.map(parseContentItem) : undefined,
-    usage: parseUsage(message.usage)
+    usage: parseUsage(message.usage),
   };
 }
 
@@ -165,14 +165,14 @@ function parseResultMessage(data: RawMessage): ResultMessage {
     result: data.result,
     totalCostUsd: data.total_cost_usd,
     usage: parseUsage(data.usage),
-    permissionDenials: data.permission_denials
+    permissionDenials: data.permission_denials,
   };
 }
 
 export function parseMessage(jsonString: string): ParsedMessage {
   try {
     const data: RawMessage = JSON.parse(jsonString);
-    
+
     if (!data.type) {
       throw new Error('Message must have a type field');
     }
@@ -180,14 +180,14 @@ export function parseMessage(jsonString: string): ParsedMessage {
     switch (data.type) {
       case 'system':
         return parseSystemMessage(data);
-      
+
       case 'assistant':
       case 'user':
         return parseConversationMessage(data);
-      
+
       case 'result':
         return parseResultMessage(data);
-      
+
       default:
         throw new Error(`Unknown message type: ${data.type}`);
     }

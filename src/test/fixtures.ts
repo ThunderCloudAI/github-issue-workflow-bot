@@ -1,4 +1,12 @@
-import { GitHubWebhook, GitHubIssue, GitHubRepository, GitHubUser, WorkflowContext, WorkflowStatus, AgentType } from '../types';
+import {
+  GitHubWebhook,
+  GitHubIssue,
+  GitHubRepository,
+  GitHubUser,
+  WorkflowContext,
+  WorkflowStatus,
+  AgentType,
+} from '../types';
 
 export const mockGitHubUser: GitHubUser = {
   id: 12345,
@@ -93,9 +101,7 @@ export const mockOctokitResponse = {
       },
     },
     addLabels: {
-      data: [
-        { id: 3, name: 'workflow:processing', color: 'f9d71c' },
-      ],
+      data: [{ id: 3, name: 'workflow:processing', color: 'f9d71c' }],
     },
   },
   pulls: {

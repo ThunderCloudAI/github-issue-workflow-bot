@@ -57,7 +57,7 @@ async function main() {
     // Initialize services
     const sqsClientFactory = new SQSClientFactory();
     const sqsClient = sqsClientFactory.createClient(sqsConfig.region);
-    
+
     const processor = new WorkflowProcessor(config);
     const consumer = new SQSConsumer(processor, sqsConfig, sqsClient);
     const webhookHandler = new WebhookHandler(webhookConfig, sqsClient);
@@ -66,7 +66,7 @@ async function main() {
     console.log('Performing health checks...');
     const processorHealth = await processor.healthCheck();
     const consumerHealth = await consumer.healthCheck();
-    
+
     console.log('Processor health:', processorHealth);
     console.log('Consumer health:', consumerHealth);
 
@@ -75,13 +75,9 @@ async function main() {
     }
 
     // Start services
-    await Promise.all([
-      webhookHandler.start(),
-      consumer.start(),
-    ]);
+    await Promise.all([webhookHandler.start(), consumer.start()]);
 
     console.log('All services started successfully');
-
   } catch (error) {
     console.error('Failed to start application:', error);
     process.exit(1);
@@ -89,21 +85,17 @@ async function main() {
 }
 
 function validateConfig() {
-  const required = [
-    'GITHUB_TOKEN',
-    'GITHUB_WEBHOOK_SECRET',
-    'SQS_QUEUE_URL',
-  ];
+  const required = ['GITHUB_TOKEN', 'GITHUB_WEBHOOK_SECRET', 'SQS_QUEUE_URL'];
 
   const missing = required.filter(key => !process.env[key]);
-  
+
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
 }
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('Uncaught exception:', error);
   process.exit(1);
 });

@@ -18,7 +18,7 @@ export class MockSQSClient implements ISQSClient {
     // Record the call for verification
     this.calls.push({
       command,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     const commandName = command.constructor.name;
@@ -126,19 +126,19 @@ export class MockSQSClient implements ISQSClient {
     if (a === b) return true;
     if (a == null || b == null) return false;
     if (typeof a !== typeof b) return false;
-    
+
     if (typeof a === 'object') {
       const keysA = Object.keys(a);
       const keysB = Object.keys(b);
       if (keysA.length !== keysB.length) return false;
-      
+
       for (const key of keysA) {
         if (!keysB.includes(key)) return false;
         if (!this.deepEqual(a[key], b[key])) return false;
       }
       return true;
     }
-    
+
     return false;
   }
 }

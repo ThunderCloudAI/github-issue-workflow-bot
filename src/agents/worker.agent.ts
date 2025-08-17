@@ -13,10 +13,10 @@ export class WorkerAgent extends BaseAgent {
     try {
       // Generate prompt for Claude implementation
       const prompt = this.buildImplementationPrompt(context);
-      
+
       // Use Claude to implement the solution
       const implementation = await this.runClaude(prompt);
-      
+
       return {
         success: true,
         output: implementation,
@@ -24,8 +24,14 @@ export class WorkerAgent extends BaseAgent {
       };
     } catch (error: any) {
       // Fallback to template-based implementation if Claude fails
-      if (error instanceof WorkflowError && (error.code.includes('CLAUDE') || error.code.includes('TIMEOUT'))) {
-        console.warn('Claude implementation failed, falling back to template-based implementation:', error.message);
+      if (
+        error instanceof WorkflowError &&
+        (error.code.includes('CLAUDE') || error.code.includes('TIMEOUT'))
+      ) {
+        console.warn(
+          'Claude implementation failed, falling back to template-based implementation:',
+          error.message
+        );
         const fallbackImplementation = await this.generateTemplateImplementation(context);
         return {
           success: true,
@@ -33,7 +39,7 @@ export class WorkerAgent extends BaseAgent {
           branchName: context.branchName,
         };
       }
-      
+
       throw new WorkflowError(
         `Worker implementation failed: ${error.message}`,
         'WORKER_IMPLEMENTATION_FAILED',
@@ -88,14 +94,16 @@ Please be specific and provide complete, working code that can be directly used.
 
   private async generateTemplateImplementation(context: WorkflowContext): Promise<string> {
     const { title, body, labels } = context;
-    
+
     // Simple template-based implementation
     await this.delay(1000);
-    
-    const isAuthRelated = title.toLowerCase().includes('auth') || body.toLowerCase().includes('auth');
+
+    const isAuthRelated =
+      title.toLowerCase().includes('auth') || body.toLowerCase().includes('auth');
     const isAPIRelated = title.toLowerCase().includes('api') || body.toLowerCase().includes('api');
-    const isDatabaseRelated = title.toLowerCase().includes('database') || title.toLowerCase().includes('data');
-    
+    const isDatabaseRelated =
+      title.toLowerCase().includes('database') || title.toLowerCase().includes('data');
+
     if (isAuthRelated) {
       return this.generateAuthImplementation(context);
     } else if (isAPIRelated) {

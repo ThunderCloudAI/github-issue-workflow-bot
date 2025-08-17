@@ -59,7 +59,12 @@ export class WebhookStack extends cdk.Stack {
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: ['POST'],
-        allowHeaders: ['Content-Type', 'X-Hub-Signature-256', 'X-GitHub-Event', 'X-GitHub-Delivery'],
+        allowHeaders: [
+          'Content-Type',
+          'X-Hub-Signature-256',
+          'X-GitHub-Event',
+          'X-GitHub-Delivery',
+        ],
       },
       deployOptions: {
         stageName: 'prod',

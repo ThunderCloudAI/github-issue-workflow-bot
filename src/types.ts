@@ -67,13 +67,13 @@ export enum WorkflowStatus {
   AGENT_ASSIGNED = 'agent_assigned',
   PROCESSING = 'processing',
   COMPLETED = 'completed',
-  FAILED = 'failed'
+  FAILED = 'failed',
 }
 
 export enum AgentType {
   TECH_LEAD = 'tech_lead',
   WORKER = 'worker',
-  QA = 'qa'
+  QA = 'qa',
 }
 
 export interface AgentResult {

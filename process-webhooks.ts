@@ -2,12 +2,17 @@
 
 /**
  * Simple GitHub Webhook Processor (TypeScript)
- * 
+ *
  * This script polls the SQS queue for GitHub webhook messages and processes them.
  * It demonstrates how to handle different types of GitHub events with proper typing.
  */
 
-import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand, Message } from '@aws-sdk/client-sqs';
+import {
+  SQSClient,
+  ReceiveMessageCommand,
+  DeleteMessageCommand,
+  Message,
+} from '@aws-sdk/client-sqs';
 
 // Configuration
 const QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/036670977009/github-webhook-events';
@@ -250,7 +255,18 @@ interface PushEventPayload {
 }
 
 interface PullRequestEventPayload {
-  action: 'opened' | 'edited' | 'closed' | 'reopened' | 'assigned' | 'unassigned' | 'review_requested' | 'review_request_removed' | 'labeled' | 'unlabeled' | 'synchronize';
+  action:
+    | 'opened'
+    | 'edited'
+    | 'closed'
+    | 'reopened'
+    | 'assigned'
+    | 'unassigned'
+    | 'review_requested'
+    | 'review_request_removed'
+    | 'labeled'
+    | 'unlabeled'
+    | 'synchronize';
   number: number;
   pull_request: GitHubPullRequest;
   repository: GitHubRepository;
@@ -258,7 +274,18 @@ interface PullRequestEventPayload {
 }
 
 interface IssueEventPayload {
-  action: 'opened' | 'edited' | 'deleted' | 'pinned' | 'unpinned' | 'closed' | 'reopened' | 'assigned' | 'unassigned' | 'labeled' | 'unlabeled';
+  action:
+    | 'opened'
+    | 'edited'
+    | 'deleted'
+    | 'pinned'
+    | 'unpinned'
+    | 'closed'
+    | 'reopened'
+    | 'assigned'
+    | 'unassigned'
+    | 'labeled'
+    | 'unlabeled';
   issue: GitHubIssue;
   repository: GitHubRepository;
   sender: GitHubUser;
@@ -296,23 +323,23 @@ function processWebhookMessage(message: Message): boolean {
       case 'ping':
         processPingEvent(payload as PingEventPayload);
         break;
-      
+
       case 'push':
         processPushEvent(payload as PushEventPayload);
         break;
-      
+
       case 'pull_request':
         processPullRequestEvent(payload as PullRequestEventPayload);
         break;
-      
+
       case 'issues':
         processIssueEvent(payload as IssueEventPayload);
         break;
-      
+
       case 'issue_comment':
         processIssueCommentEvent(payload as IssueCommentEventPayload);
         break;
-      
+
       default:
         console.log(`ℹ️  Unhandled event type: ${githubEvent}`);
         console.log(`📄 Payload keys: ${Object.keys(payload).join(', ')}`);
@@ -342,13 +369,13 @@ function processPingEvent(payload: PingEventPayload): void {
  */
 function processPushEvent(payload: PushEventPayload): void {
   const { repository, ref, commits, pusher } = payload;
-  
+
   console.log('🚀 Push Event');
   console.log(`📁 Repository: ${repository.full_name}`);
   console.log(`🌿 Branch: ${ref.replace('refs/heads/', '')}`);
   console.log(`👤 Pusher: ${pusher.name} (${pusher.email})`);
   console.log(`📊 Commits: ${commits.length}`);
-  
+
   // Show recent commits
   if (commits.length > 0) {
     console.log('\n📝 Recent Commits:');
@@ -356,7 +383,9 @@ function processPushEvent(payload: PushEventPayload): void {
       const firstLine = commit.message.split('\n')[0];
       console.log(`  ${index + 1}. ${firstLine} - ${commit.author.name}`);
       console.log(`     SHA: ${commit.id.substring(0, 8)}`);
-      console.log(`     Files: +${commit.added.length} ~${commit.modified.length} -${commit.removed.length}`);
+      console.log(
+        `     Files: +${commit.added.length} ~${commit.modified.length} -${commit.removed.length}`
+      );
     });
   }
 
@@ -369,7 +398,7 @@ function processPushEvent(payload: PushEventPayload): void {
  */
 function processPullRequestEvent(payload: PullRequestEventPayload): void {
   const { action, pull_request, repository } = payload;
-  
+
   console.log('🔀 Pull Request Event');
   console.log(`📁 Repository: ${repository.full_name}`);
   console.log(`🎬 Action: ${action}`);
@@ -377,11 +406,11 @@ function processPullRequestEvent(payload: PullRequestEventPayload): void {
   console.log(`👤 Author: ${pull_request.user.login}`);
   console.log(`🌿 Branch: ${pull_request.head.ref} → ${pull_request.base.ref}`);
   console.log(`📄 State: ${pull_request.state}`);
-  
+
   if (pull_request.draft) {
     console.log('📝 Status: Draft');
   }
-  
+
   if (pull_request.labels.length > 0) {
     console.log(`🏷️  Labels: ${pull_request.labels.map(l => l.name).join(', ')}`);
   }
@@ -396,14 +425,14 @@ function processPullRequestEvent(payload: PullRequestEventPayload): void {
  */
 function processIssueEvent(payload: IssueEventPayload): void {
   const { action, issue, repository } = payload;
-  
+
   console.log('🐛 Issue Event');
   console.log(`📁 Repository: ${repository.full_name}`);
   console.log(`🎬 Action: ${action}`);
   console.log(`#️⃣  Issue #${issue.number}: ${issue.title}`);
   console.log(`👤 Author: ${issue.user.login}`);
   console.log(`📄 State: ${issue.state}`);
-  
+
   if (issue.labels.length > 0) {
     console.log(`🏷️  Labels: ${issue.labels.map(l => l.name).join(', ')}`);
   }
@@ -423,20 +452,22 @@ function processIssueEvent(payload: IssueEventPayload): void {
  */
 function processIssueCommentEvent(payload: IssueCommentEventPayload): void {
   const { action, comment, issue, repository } = payload;
-  
+
   console.log('💬 Issue Comment Event');
   console.log(`📁 Repository: ${repository.full_name}`);
   console.log(`🎬 Action: ${action}`);
   console.log(`#️⃣  Issue #${issue.number}: ${issue.title}`);
   console.log(`👤 Commenter: ${comment.user.login}`);
-  
+
   const commentPreview = comment.body.substring(0, 100);
   console.log(`💭 Comment: ${commentPreview}${comment.body.length > 100 ? '...' : ''}`);
-  
+
   const { reactions } = comment;
   const totalReactions = reactions.total_count;
   if (totalReactions > 0) {
-    console.log(`👍 Reactions: ${totalReactions} (👍 ${reactions['+1']} 👎 ${reactions['-1']} ❤️ ${reactions.heart})`);
+    console.log(
+      `👍 Reactions: ${totalReactions} (👍 ${reactions['+1']} 👎 ${reactions['-1']} ❤️ ${reactions.heart})`
+    );
   }
 }
 
@@ -460,22 +491,24 @@ async function pollQueue(): Promise<void> {
       });
 
       const response = await sqsClient.send(command);
-      
+
       if (response.Messages && response.Messages.length > 0) {
         console.log(`📨 Received ${response.Messages.length} message(s)`);
-        
+
         // Process each message
         for (const message of response.Messages) {
           const processed = processWebhookMessage(message);
-          
+
           if (processed) {
             // Delete message from queue after successful processing
             if (message.ReceiptHandle) {
-              await sqsClient.send(new DeleteMessageCommand({
-                QueueUrl: QUEUE_URL,
-                ReceiptHandle: message.ReceiptHandle,
-              }));
-              
+              await sqsClient.send(
+                new DeleteMessageCommand({
+                  QueueUrl: QUEUE_URL,
+                  ReceiptHandle: message.ReceiptHandle,
+                })
+              );
+
               console.log('✅ Message processed and deleted from queue');
             }
           } else {
@@ -499,7 +532,7 @@ async function pollQueue(): Promise<void> {
 async function peekQueue(): Promise<void> {
   try {
     console.log('👀 Peeking at queue contents...\n');
-    
+
     const command = new ReceiveMessageCommand({
       QueueUrl: QUEUE_URL,
       MaxNumberOfMessages: 1,
@@ -508,7 +541,7 @@ async function peekQueue(): Promise<void> {
     });
 
     const response = await sqsClient.send(command);
-    
+
     if (response.Messages && response.Messages.length > 0) {
       console.log('📨 Found message in queue:');
       processWebhookMessage(response.Messages[0]);
@@ -526,10 +559,10 @@ async function peekQueue(): Promise<void> {
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  
+
   console.log('🔧 GitHub Webhook Processor (TypeScript)');
-  console.log('=' .repeat(50));
-  
+  console.log('='.repeat(50));
+
   if (args.includes('--help') || args.includes('-h')) {
     console.log('Usage:');
     console.log('  tsx process-webhooks.ts [--process|--peek]');
@@ -542,7 +575,7 @@ async function main(): Promise<void> {
     console.log('  --help, -h   Show this help message');
     return;
   }
-  
+
   if (args.includes('--peek')) {
     await peekQueue();
   } else {
