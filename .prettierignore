@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+build/
+cdk.out/
+coverage/
+
+# Generated files
+*.js
+*.d.ts
+!lambda/webhook/simple-index.js
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# AWS and CDK
+.aws/
+cdk.context.json
+
+# Environment files
+.env
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
